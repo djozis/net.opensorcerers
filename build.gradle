@@ -4,19 +4,34 @@ buildscript {
     }
     dependencies {
         classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+        classpath 'org.xtext:xtext-gradle-plugin:1.0.9'
     }
 }
 
 apply plugin: 'war'
 apply plugin: 'gwt'
-apply plugin: 'eclipse'
 
-repositories { mavenCentral() }
+repositories {
+    jcenter()
+}
+
+apply plugin: 'org.xtext.xtend'
+tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+dependencies.compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.10.0'
+
+apply plugin: 'eclipse'
+eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
+
+group = 'com.davidjozis'
+version = '0.0.1'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 gwt {
 	gwtVersion='2.7.0'
 
-	modules 'de.richsource.gradle.plugins.gwt.example.Example'
+	modules 'com.davidjozis.gwt.example.Example'
 	
 	maxHeapSize = "1024M"
 }
