@@ -1,0 +1,22 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+    }
+}
+
+apply plugin: 'war'
+apply plugin: 'gwt'
+apply plugin: 'eclipse'
+
+repositories { mavenCentral() }
+
+gwt {
+	gwtVersion='2.7.0'
+
+	modules 'de.richsource.gradle.plugins.gwt.example.Example'
+	
+	maxHeapSize = "1024M"
+}

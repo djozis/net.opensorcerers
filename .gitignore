@@ -1,0 +1,8 @@
+build/
+src/main/gwt-unitCache/
+src/main/webapp/app/
+war/
+.gradle
+.settings
+.classpath
+.project
