@@ -8,30 +8,36 @@ buildscript {
     }
 }
 
-apply plugin: 'war'
-apply plugin: 'gwt'
-
 repositories {
     jcenter()
 }
 
+apply plugin: 'war'
+
 apply plugin: 'org.xtext.xtend'
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-dependencies.compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.10.0'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 apply plugin: 'eclipse'
 eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
 
-group = 'com.davidjozis'
-version = '0.0.1'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
+apply plugin: 'gwt'
 gwt {
-	gwtVersion='2.7.0'
-
+	gwtVersion='2.8.0-rc3'
+    
 	modules 'com.davidjozis.gwt.example.Example'
 	
 	maxHeapSize = "1024M"
+}
+
+group = 'com.davidjozis'
+version = '0.0.1'
+
+dependencies {
+    // disable transitive so we can use a later xtend version.
+    gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1', classifier: 'sources') { transitive = false }
+    gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1') { transitive = false }
+    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.10.0'
+    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.10.0'
 }
