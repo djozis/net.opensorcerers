@@ -5,13 +5,4 @@
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
-
-	<servlet>
-		<servlet-name>HelloWorldService</servlet-name>
-		<servlet-class>com.davidjozis.gwt.example.server.HelloWorldServiceImpl</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>HelloWorldService</servlet-name>
-		<url-pattern>/app/helloWorldService</url-pattern>
-	</servlet-mapping>
 </web-app>
