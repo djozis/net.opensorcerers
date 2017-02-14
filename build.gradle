@@ -59,4 +59,5 @@ dependencies {
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1') { transitive = false }
     gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.10.0'
     compile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.10.0'
+    compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
 }
