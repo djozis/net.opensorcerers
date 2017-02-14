@@ -2,15 +2,13 @@
 // I couldn't find any complete Gradle samples online, so I wanted to share this.
 // My notes for getting this project into a workable state, your milage may vary:
 //
-// @WebServlet annotations don't seem to work when using the Eclipse GWT plugin, even with 2.8.0-rc3 SDK, but work fine otherwise.
-// Consider using either:
-// - gradle gwtDev (requires hitting restart server if you change the server side)
-// - A webserver external to the Eclipse GWT plugin
+// @WebServlet annotations work both via "gradle gwtDev" and the Eclipse GWT plugin but only with at least the 2.8.0 SDK.
 //
 // To set up the project in Eclipse:
 // - Download Eclipse for DSL developers
-// - Consider installing the GWT plugin for Eclipse
-//   - If you do, install the 2.8.0-rc3 SDK for the plugin, too
+// - Consider installing the Google plugin for Eclipse (GWT support): https://developers.google.com/eclipse/docs/download
+//   - If you do, install the 2.8.0 SDK for the plugin, too: https://developers.google.com/eclipse/docs/using_sdks
+//     Which you can find here: http://www.gwtproject.org/versions.html
 // - Consider using http://sdbg.github.io/ in Eclipse for Eclipse-integrated client-side debugging.
 // - Run in the directory containing this build script: gradle eclipse
 // - In Eclipse, use File > Import > General/Existing Projects into Workspace, and select this directory.
@@ -41,7 +39,7 @@ eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclips
 
 apply plugin: 'gwt'
 gwt {
-	gwtVersion='2.8.0-rc3'
+	gwtVersion='2.8.0'
     
 	modules 'com.davidjozis.gwt.example.Example'
 	
