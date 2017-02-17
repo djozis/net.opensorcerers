@@ -58,18 +58,18 @@ version = '0.0.1'
 
 dependencies {
     // gwt dependencies are compile time/Eclipse/gwtDev only, they are not bundled into the war from "gradle war"
-    // runtime dependencies are bundled into the war from "gradle war"
+    // compile/runtime dependencies are bundled into the war from "gradle war"
     
     // disable transitive so we can use a later xtend version.
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1', classifier: 'sources') { transitive = false }
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1') { transitive = false }
     gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.11.0'
     gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0', classifier: 'sources'
-    runtime group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0'
+    compile group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0'
     gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.11.0'
     gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0', classifier: 'sources'
-    runtime group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0'
+    compile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0'
     gwt 'com.google.guava:guava-gwt:21.0'
-    runtime 'com.google.guava:guava:21.0'
+    compile 'com.google.guava:guava:21.0'
     compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
 }
