@@ -6,12 +6,17 @@
 //
 // To set up the project in Eclipse:
 // - Download Eclipse for DSL developers
-// - Consider installing the Google plugin for Eclipse (GWT support): https://developers.google.com/eclipse/docs/download
+// - Consider installing the Google Plugin for Eclipse (GWT support): https://developers.google.com/eclipse/docs/download
 //   - If you do, install the 2.8.0 SDK for the plugin, too: https://developers.google.com/eclipse/docs/using_sdks
 //     Which you can find here: http://www.gwtproject.org/versions.html
 // - Consider using http://sdbg.github.io/ in Eclipse for Eclipse-integrated client-side debugging.
 // - Run in the directory containing this build script: gradle eclipse
 // - In Eclipse, use File > Import > General/Existing Projects into Workspace, and select this directory.
+//
+// To compile in Gradle for production, etc:
+// - Run in the directory containing this build script: gradle war
+// - Created war file is in build/libs
+// - Tested to work with Tomcat 8.5
 
 buildscript {
     repositories {
@@ -19,7 +24,8 @@ buildscript {
     }
     dependencies {
         classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
-        classpath 'org.xtext:xtext-gradle-plugin:1.0.9'
+        classpath 'org.xtext:xtext-gradle-plugin:1.0.17'
+        classpath 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.11.0'
     }
 }
 
@@ -45,17 +51,25 @@ gwt {
 	
 	maxHeapSize = "1024M"
 }
+clean.delete 'war'
 
 group = 'com.davidjozis'
 version = '0.0.1'
 
 dependencies {
-    // gwt dependencies are compile time only. compile is available at run time also.
+    // gwt dependencies are compile time/Eclipse/gwtDev only, they are not bundled into the war from "gradle war"
+    // runtime dependencies are bundled into the war from "gradle war"
     
     // disable transitive so we can use a later xtend version.
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1', classifier: 'sources') { transitive = false }
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1') { transitive = false }
-    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.10.0'
-    compile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.10.0'
+    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.11.0'
+    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0', classifier: 'sources'
+    runtime group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0'
+    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.11.0'
+    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0', classifier: 'sources'
+    runtime group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0'
+    gwt 'com.google.guava:guava-gwt:21.0'
+    runtime 'com.google.guava:guava:21.0'
     compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
 }
