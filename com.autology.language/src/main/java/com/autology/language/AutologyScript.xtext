@@ -1,0 +1,9 @@
+grammar com.autology.language.AutologyScript with org.eclipse.xtext.common.Terminals
+
+generate autologyScript "http://www.autology.com/language/AutologyScript"
+
+Model:
+	greetings+=Greeting*;
+	
+Greeting:
+	'Hello' name=ID '!';

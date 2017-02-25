@@ -1,1 +1,4 @@
-rootProject.name = 'test-project'
+include 'com.autology.language'
+include 'com.autology.language.ide'
+include 'com.autology.language.web'
+include 'com.autology.game'
