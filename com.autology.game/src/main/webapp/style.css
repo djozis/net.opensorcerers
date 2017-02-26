@@ -44,7 +44,7 @@ a:hover {
 	width: 640px;
 }
 
-#xtext-editor {
+.xtext-editor {
 	display: block;
 	position: absolute;
 	top: 0;

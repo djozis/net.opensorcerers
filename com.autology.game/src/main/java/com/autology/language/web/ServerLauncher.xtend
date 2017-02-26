@@ -29,7 +29,7 @@ class ServerLauncher {
 				new WebInfConfiguration,
 				new MetaInfConfiguration
 			]
-			setAttribute(WebInfConfiguration.CONTAINER_JAR_PATTERN, '.*/com\\.autology\\.language\\.web/.*,.*\\.jar')
+			setAttribute(WebInfConfiguration.CONTAINER_JAR_PATTERN, '.*/com\\.autology\\.game/.*,.*\\.jar')
 			setInitParameter("org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false")
 		]
 		val log = new Slf4jLog(ServerLauncher.name)

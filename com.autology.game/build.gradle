@@ -34,15 +34,6 @@ repositories {
 }
 
 apply plugin: 'war'
-
-apply plugin: 'org.xtext.xtend'
-tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-apply plugin: 'eclipse'
-eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
-
 apply plugin: 'gwt'
 gwt {
 	gwtVersion='2.8.0'
@@ -72,5 +63,12 @@ dependencies {
     gwt 'com.google.guava:guava-gwt:21.0'
     compile 'com.google.guava:guava:21.0'
     compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
-	compile project(':com.autology.language.web')
+	compile project(':com.autology.language')
+	compile project(':com.autology.language.ide')
+	compile "org.eclipse.xtext:org.eclipse.xtext.xbase.web:${xtextVersion}"
+	compile "org.eclipse.xtext:org.eclipse.xtext.web.servlet:${xtextVersion}"
+	compile "org.eclipse.xtend:org.eclipse.xtend.lib:${xtextVersion}"
+	compile "org.webjars:requirejs:2.3.2"
+	compile "org.webjars:jquery:2.2.4"
+	compile "org.webjars:ace:1.2.3"
 }

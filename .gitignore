@@ -5,8 +5,8 @@ src/main/webapp/app/
 war/
 bin/
 generated/
-xtext-gen/
 xtend-gen/
+xtext-gen/
 .gradle
 .settings
 .classpath
