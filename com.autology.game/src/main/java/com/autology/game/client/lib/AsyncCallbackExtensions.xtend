@@ -1,4 +1,4 @@
-package com.davidjozis.gwt.example.lib
+package com.autology.game.client.lib
 
 import com.google.gwt.user.client.rpc.AsyncCallback
 

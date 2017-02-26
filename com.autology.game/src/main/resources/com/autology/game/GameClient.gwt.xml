@@ -5,6 +5,5 @@
 	<inherits name="de.itemis.xtend.auto.gwt.AutoGWT" />
 	<source path="client" />
 	<source path="shared" />
-	<source path="lib" />
-	<entry-point class="com.davidjozis.gwt.example.client.ExampleEntryPoint" />
+	<entry-point class="com.autology.game.client.ClientEntryPoint" />
 </module>

@@ -38,7 +38,7 @@ apply plugin: 'gwt'
 gwt {
 	gwtVersion='2.8.0'
     
-	modules 'com.davidjozis.gwt.example.Example'
+	modules 'com.autology.game.GameClient'
 	
 	maxHeapSize = "1024M"
 }
@@ -48,21 +48,21 @@ group = 'com.davidjozis'
 version = '0.0.1'
 
 dependencies {
-    // gwt dependencies are compile time/Eclipse/gwtDev only, they are not bundled into the war from "gradle war"
-    // compile/runtime dependencies are bundled into the war from "gradle war"
-    
+    // GWT
     // disable transitive so we can use a later xtend version.
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1', classifier: 'sources') { transitive = false }
     gwt(group: 'org.xtend', name: 'auto-gwt', version: '0.0.1') { transitive = false }
-    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: '2.11.0'
-    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0', classifier: 'sources'
-    compile group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: '2.11.0'
-    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: '2.11.0'
-    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0', classifier: 'sources'
-    compile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: '2.11.0'
+    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib.gwt', version: xtextVersion
+    gwt group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: xtextVersion, classifier: 'sources'
+    compile group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.lib', version: xtextVersion
+    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib.gwt', version: xtextVersion
+    gwt group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: xtextVersion, classifier: 'sources'
+    compile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.lib', version: xtextVersion
     gwt 'com.google.guava:guava-gwt:21.0'
     compile 'com.google.guava:guava:21.0'
     compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
+    
+    // Xtext for AutologyScript
 	compile project(':com.autology.language')
 	compile project(':com.autology.language.ide')
 	compile "org.eclipse.xtext:org.eclipse.xtext.xbase.web:${xtextVersion}"
@@ -71,4 +71,14 @@ dependencies {
 	compile "org.webjars:requirejs:2.3.2"
 	compile "org.webjars:jquery:2.2.4"
 	compile "org.webjars:ace:1.2.3"
+    
+    // Database
+    compile 'mysql:mysql-connector-java:6.0.4'
+    compile 'commons-dbcp:commons-dbcp:1.4'
+    compile 'org.hibernate:hibernate-core:5.2.3.Final'
+    testCompile 'com.h2database:h2:1.4.192'
+    
+    // General
+    compile 'org.reflections:reflections:0.9.10'
+    testCompile 'junit:junit:4.12'
 }
