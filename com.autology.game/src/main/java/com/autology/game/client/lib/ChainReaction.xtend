@@ -18,6 +18,7 @@ import java.util.ArrayDeque
  */
 class ChainReaction {
 	val actionQueue = new ArrayDeque<(ChainReaction)=>void>
+	var inCallback = 0
 	var outstanding = 0
 
 	new() {
@@ -44,7 +45,12 @@ class ChainReaction {
 	}
 
 	def <T> andThen((ChainReaction)=>void callback) {
-		actionQueue.addLast(callback)
+		// If the chain is already going, do the andThen immediately next
+		if (outstanding > 0) {
+			actionQueue.addFirst(callback)
+		} else {
+			actionQueue.addLast(callback)
+		}
 		return this
 	}
 

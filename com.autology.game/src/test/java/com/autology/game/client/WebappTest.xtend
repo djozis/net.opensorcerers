@@ -47,22 +47,22 @@ class WebappTest extends BootstrappingGWTTestCase {
 	}
 
 	@Test def void testApp1() {
-		new ChainReaction [ chain |
-			chain.addServerMethod("serverSetup1") [
-				delayTestFinish(30000)
-				new ClientEntryPoint().addOnLoad(chain).andThen [
-					RootPanel.get.element.childNodes.iterable.map [
-						try {
-							Element.^as(it).innerText
-						} catch (Exception e) {
-							null
-						}
-					].filterNull.toSet.contains(
-						"MyUsername"
-					).assertTrue
-					finishTest
-				]
-			]
+		new ChainReaction [
+			addServerMethod("serverSetup1")
+		].andThen [
+			delayTestFinish(30000)
+			new ClientEntryPoint().addOnLoad(it)
+		].andThen [
+			RootPanel.get.element.childNodes.iterable.map [
+				try {
+					Element.^as(it).innerText
+				} catch (Exception e) {
+					null
+				}
+			].filterNull.toSet.contains(
+				"MyUsername"
+			).assertTrue
+			finishTest
 		].start
 	}
 
@@ -78,22 +78,22 @@ class WebappTest extends BootstrappingGWTTestCase {
 	}
 
 	@Test def void testApp2() {
-		new ChainReaction [ chain |
-			chain.addServerMethod("serverSetup2") [
-				delayTestFinish(30000)
-				new ClientEntryPoint().addOnLoad(chain).andThen [
-					RootPanel.get.element.childNodes.iterable.map [
-						try {
-							Element.^as(it).innerText
-						} catch (Exception e) {
-							null
-						}
-					].filterNull.toSet.contains(
-						"YourUsername"
-					).assertTrue
-					finishTest
-				]
-			]
+		new ChainReaction [
+			addServerMethod("serverSetup2")
+		].andThen [
+			delayTestFinish(30000)
+			new ClientEntryPoint().addOnLoad(it)
+		].andThen [
+			RootPanel.get.element.childNodes.iterable.map [
+				try {
+					Element.^as(it).innerText
+				} catch (Exception e) {
+					null
+				}
+			].filterNull.toSet.contains(
+				"YourUsername"
+			).assertTrue
+			finishTest
 		].start
 	}
 }

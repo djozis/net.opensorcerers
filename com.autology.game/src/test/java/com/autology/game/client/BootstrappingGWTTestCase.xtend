@@ -82,12 +82,12 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	/**
 	 * Executes one of this test classes methods on the server.
 	 */
-	def addServerMethod(extension ChainReaction chain, String bootstrapMethod, ()=>void callback) {
+	def addServerMethod(extension ChainReaction chain, String bootstrapMethod) {
 		return andThen[
 			delayTestFinish(60000)
 			GWT.<ServerSideTestProcessingServiceAsync>create(ServerSideTestProcessingService).callServerSideMethod(
 				bootstrapMethod,
-				chainCallback[callback.apply]
+				chainCallback[]
 			)
 		]
 	}
