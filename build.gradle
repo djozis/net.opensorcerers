@@ -24,7 +24,7 @@ subprojects {
     eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 	
-	group = 'com.autology.language'
+	group = 'net.opensorcerers.language'
 	version = '1.0.0-SNAPSHOT'
 	
 	sourceCompatibility = '1.8'
