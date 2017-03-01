@@ -44,7 +44,7 @@ gwt {
 }
 clean.delete 'war'
 
-group = 'com.davidjozis'
+group = 'com.autology'
 version = '0.0.1'
 
 dependencies {
@@ -76,9 +76,13 @@ dependencies {
     compile 'mysql:mysql-connector-java:6.0.4'
     compile 'commons-dbcp:commons-dbcp:1.4'
     compile 'org.hibernate:hibernate-core:5.2.3.Final'
-    testCompile 'com.h2database:h2:1.4.192'
+    compile 'com.h2database:h2:1.4.192'
     
     // General
     compile 'org.reflections:reflections:0.9.10'
     testCompile 'junit:junit:4.12'
+    testCompile 'org.seleniumhq.selenium:selenium-htmlunit-driver:2.52.0'
+	testCompile "org.eclipse.jetty:jetty-annotations:9.3.8.v20160314"
+	testCompile "org.slf4j:slf4j-simple:1.7.21"
+    testCompile "org.webjars:webjars-servlet-2.x:1.1"
 }
