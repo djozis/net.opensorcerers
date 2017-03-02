@@ -18,7 +18,6 @@ import java.util.ArrayDeque
  */
 class ChainReaction {
 	val actionQueue = new ArrayDeque<(ChainReaction)=>void>
-	var inCallback = 0
 	var outstanding = 0
 
 	new() {
