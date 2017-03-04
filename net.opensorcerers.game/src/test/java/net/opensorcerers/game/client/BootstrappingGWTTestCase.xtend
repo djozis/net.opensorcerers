@@ -142,6 +142,6 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	}
 
 	def addUpdateCodeCoverage(extension ChainReaction chain) {
-		return chain.addServerMethod("processUpdateCodeCoverageServer", TestJavascriptHooks.gwtCoverageJsonString)
+		return chain.addServerMethod("processUpdateCodeCoverageServer", TestExtensions.gwtCoverageJsonString)
 	}
 }
