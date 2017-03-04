@@ -17,13 +17,16 @@ import java.util.ArrayDeque
  * immediately after all callbacks that were part of that chain return.
  */
 class ChainReaction {
-	val actionQueue = new ArrayDeque<(ChainReaction)=>void>
-	var outstanding = 0
+	val ArrayDeque<(ChainReaction)=>void> actionQueue
+	var int outstanding
 
 	new() {
+		actionQueue = new ArrayDeque
+		outstanding = 0
 	}
 
 	new((ChainReaction)=>void callback) {
+		this()
 		andThen(callback)
 	}
 
@@ -38,9 +41,11 @@ class ChainReaction {
 	}
 
 	def start() {
-		incrementOutstanding
-		actionQueue.poll?.apply(this)
-		decrementOutstanding
+		if (!actionQueue.empty) {
+			incrementOutstanding
+			actionQueue.poll.apply(this)
+			decrementOutstanding
+		}
 	}
 
 	def <T> andThen((ChainReaction)=>void callback) {
@@ -53,32 +58,42 @@ class ChainReaction {
 		return this
 	}
 
+	private static class ChainedCallback<T> implements AsyncCallback<T> {
+		val extension ChainReaction chain
+		val (T)=>void handler
+		var boolean hasBeenCalled
+
+		new(ChainReaction chain, (T)=>void handler) {
+			this.chain = chain
+			this.handler = handler
+			hasBeenCalled = false
+		}
+
+		override onSuccess(T result) {
+			if (hasBeenCalled) {
+				throw new IllegalStateException(
+					"You may not reuse chained callback objects."
+				)
+			}
+			hasBeenCalled = true
+			handler.apply(result)
+			decrementOutstanding
+		}
+
+		override onFailure(Throwable caught) {
+			if (hasBeenCalled) {
+				throw new IllegalStateException(
+					"You may not reuse chained callback objects."
+				)
+			}
+			hasBeenCalled = true
+			GWT.log(caught.toString)
+			decrementOutstanding
+		}
+	}
+
 	def <T> AsyncCallback<T> chainCallback((T)=>void handler) {
 		incrementOutstanding
-		return new AsyncCallback<T>() {
-			var hasBeenCalled = false
-
-			override onSuccess(T result) {
-				if (hasBeenCalled) {
-					throw new IllegalStateException(
-						"You may not reuse chained callback objects."
-					)
-				}
-				hasBeenCalled = true
-				handler.apply(result)
-				decrementOutstanding
-			}
-
-			override onFailure(Throwable caught) {
-				if (hasBeenCalled) {
-					throw new IllegalStateException(
-						"You may not reuse chained callback objects."
-					)
-				}
-				hasBeenCalled = true
-				GWT.log(caught.toString)
-				decrementOutstanding
-			}
-		}
+		return new ChainedCallback<T>(this, handler)
 	}
 }

@@ -26,11 +26,8 @@ buildscript {
         classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
         classpath 'org.xtext:xtext-gradle-plugin:1.0.17'
         classpath 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.11.0'
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.1'
     }
-}
-
-repositories {
-    jcenter()
 }
 
 apply plugin: 'war'
@@ -85,4 +82,18 @@ dependencies {
 	testCompile "org.eclipse.jetty:jetty-annotations:9.3.8.v20160314"
 	testCompile "org.slf4j:slf4j-simple:1.7.21"
     testCompile "org.webjars:webjars-servlet-2.x:1.1"
+    testCompile 'org.jacoco:org.jacoco.core:0.7.9' // for generating jacoco exec from gwt.coverage data
+}
+
+apply plugin: 'jacoco'
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+    }
+    executionData(file("build/GWTJacocoAdaptor/jacoco.exec"))
+}
+apply plugin: 'com.github.kt3k.coveralls'
+tasks.coveralls {
+  dependsOn 'check', 'jacocoTestReport'
 }

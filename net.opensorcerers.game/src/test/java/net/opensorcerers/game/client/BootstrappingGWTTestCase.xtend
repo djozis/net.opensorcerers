@@ -1,11 +1,5 @@
 package net.opensorcerers.game.client
 
-import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
-import net.opensorcerers.game.client.lib.ChainReaction
-import net.opensorcerers.game.server.ApplicationResources
-import net.opensorcerers.game.shared.ServerSideTestProcessingService
-import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
-import net.opensorcerers.util.ReflectionsBootstrap
 import com.google.gwt.core.client.Callback
 import com.google.gwt.core.client.GWT
 import com.google.gwt.core.client.ScriptInjector
@@ -13,7 +7,15 @@ import com.google.gwt.core.shared.GwtIncompatible
 import com.google.gwt.dev.cfg.ModuleDef
 import com.google.gwt.junit.PropertyDefiningStrategy
 import com.google.gwt.junit.client.GWTTestCase
+import java.util.ArrayList
 import javax.servlet.annotation.WebServlet
+import net.opensorcerers.coverage.GWTJacocoAdaptor
+import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
+import net.opensorcerers.game.client.lib.ChainReaction
+import net.opensorcerers.game.server.ApplicationResources
+import net.opensorcerers.game.shared.ServerSideTestProcessingService
+import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
+import net.opensorcerers.util.ReflectionsBootstrap
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -66,30 +68,48 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 
 	@GwtIncompatible def static getCurrentTest() { return currentTest }
 
+	def serverSidePrintln(String toPrint) { println(toPrint) }
+
+	def serverPrintln(String toPrint) {
+		GWT.<ServerSideTestProcessingServiceAsync>create(ServerSideTestProcessingService).callServerSideMethod(
+			"serverSidePrintln",
+			new ArrayList<Object> => [addAll(toPrint)],
+			new ChainReaction().chainCallback[]
+		)
+	}
+
 	/**
 	 * Documentation said do not override or call this method. Didn't say anything about doing both.
 	 */
 	@GwtIncompatible override runTest() {
 		currentTest = this
+		GWTJacocoAdaptor.setGwtCoveragePaths
 		super.runTest
 	}
 
-	@GwtIncompatible def callServerSideMethod(String methodName) {
+	@GwtIncompatible def callServerSideMethod(String methodName, Object... arguments) {
 		checkInitializeServer
-		class.getMethod(methodName).invoke(this)
+		return class.methods.filter [
+			name == methodName && parameterTypes.length == arguments.length
+		].head.invoke(this, arguments)
 	}
 
 	/**
 	 * Executes one of this test classes methods on the server.
 	 */
-	def addServerMethod(extension ChainReaction chain, String bootstrapMethod) {
+	def addServerMethod(extension ChainReaction chain, String methodName, Object... arguments) {
 		return andThen[
 			delayTestFinish(60000)
 			GWT.<ServerSideTestProcessingServiceAsync>create(ServerSideTestProcessingService).callServerSideMethod(
-				bootstrapMethod,
+				methodName,
+				new ArrayList<Object> => [addAll(arguments)],
 				chainCallback[]
 			)
 		]
+	}
+
+	def addServerMethod(extension ChainReaction chain, String methodName) {
+		return chain.addServerMethod(methodName, #[])
 	}
 
 	/**
@@ -115,5 +135,13 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 				}
 			}
 		}
+	}
+
+	@GwtIncompatible def void processUpdateCodeCoverageServer(String gwtCoverageJsonString) {
+		GWTJacocoAdaptor.processCoverage(gwtCoverageJsonString)
+	}
+
+	def addUpdateCodeCoverage(extension ChainReaction chain) {
+		return chain.addServerMethod("processUpdateCodeCoverageServer", TestJavascriptHooks.gwtCoverageJsonString)
 	}
 }

@@ -1,7 +1,5 @@
 package net.opensorcerers.game.client
 
-import net.opensorcerers.database.entities.DBUser
-import net.opensorcerers.game.client.lib.ChainReaction
 import com.google.gwt.core.shared.GwtIncompatible
 import com.google.gwt.dom.client.Element
 import com.google.gwt.dom.client.Node
@@ -9,6 +7,8 @@ import com.google.gwt.dom.client.NodeList
 import com.google.gwt.user.client.Timer
 import com.google.gwt.user.client.ui.RootPanel
 import java.util.Iterator
+import net.opensorcerers.database.entities.DBUser
+import net.opensorcerers.game.client.lib.ChainReaction
 import org.junit.Test
 
 import static extension net.opensorcerers.database.bootstrap.DatabaseExtensions.*
@@ -62,8 +62,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 			].filterNull.toSet.contains(
 				"MyUsername"
 			).assertTrue
-			finishTest
-		].start
+		].addUpdateCodeCoverage.andThen[finishTest].start
 	}
 
 	@GwtIncompatible def void serverSetup2() {
@@ -93,7 +92,6 @@ class WebappTest extends BootstrappingGWTTestCase {
 			].filterNull.toSet.contains(
 				"YourUsername"
 			).assertTrue
-			finishTest
-		].start
+		].addUpdateCodeCoverage.andThen[finishTest].start
 	}
 }
