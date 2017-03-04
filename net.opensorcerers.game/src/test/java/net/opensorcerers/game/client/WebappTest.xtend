@@ -9,9 +9,18 @@ import org.junit.Test
 
 import static extension net.opensorcerers.database.bootstrap.DatabaseExtensions.*
 import static extension net.opensorcerers.game.client.TestExtensions.*
+import net.opensorcerers.game.shared.Wrapper
 
 class WebappTest extends BootstrappingGWTTestCase {
 	override getModuleName() '''net.opensorcerers.game.GameClient'''
+
+	@Test def void testChainedEntryPoint() {
+		val validationWrapper = new Wrapper(false)
+		val ChainedEntryPoint entryPoint = [andThen[validationWrapper.value = true]]
+		assertFalse(validationWrapper.value)
+		entryPoint.onModuleLoad
+		assertTrue(validationWrapper.value)
+	}
 
 	@GwtIncompatible def void serverSetup1() {
 		databaseConnectivity.clearDatabase
