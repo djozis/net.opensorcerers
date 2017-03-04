@@ -1,54 +1,77 @@
 package net.opensorcerers.game.server
 
 import de.itemis.xtend.auto.gwt.GwtService
-import java.security.SecureRandom
 import java.util.Random
 import javax.servlet.annotation.WebServlet
+import net.opensorcerers.database.entities.DBAuthenticationIdPassword
 import net.opensorcerers.database.entities.DBUser
-import net.opensorcerers.database.entities.DBUserConnection
+import net.opensorcerers.database.entities.DBUserSession
+import net.opensorcerers.game.shared.ClientVisibleException
+import net.opensorcerers.game.shared.ResponseOrError
+
+import static net.opensorcerers.game.shared.ResponseOrError.*
 
 import static extension net.opensorcerers.database.bootstrap.DatabaseExtensions.*
 import static extension net.opensorcerers.util.PasswordHashing.*
 
 @GwtService @WebServlet("/app/authenticationService") class AuthenticationServiceImpl {
-	val random = new SecureRandom
+	override ResponseOrError<Void> createAccount(String email, String password) {
+		emptyResponseOrError[
+			val user = new DBUser => [
+				alias = new Random().nextLong.toString
+			]
 
-	protected def createConnectionKey() { return random.randomBytes(16) }
+			val userConnection = new DBUserSession => [
+				it.id = threadLocalRequest.getSession(true).id
+				it.user = user
+			]
 
-	protected def static randomBytes(Random random, int size) {
-		val key = newByteArrayOfSize(size)
-		random.nextBytes(key)
-		return key
+			val authentication = new DBAuthenticationIdPassword => [
+				it.id = email
+				it.digest = password.toCharArray.createDigest
+				it.user = user
+			]
+
+			ApplicationResources.instance.databaseConnectivity.withDatabaseConnection [
+				if (!queryClassWhere(
+					DBAuthenticationIdPassword,
+					"id" -> email
+				).empty) {
+					throw new ClientVisibleException(
+						'''User id "«email»" is already in use'''
+					)
+				}
+
+				withTransaction [
+					persist(user)
+					persist(authentication)
+					saveOrUpdate(userConnection)
+				]
+			]
+		]
 	}
 
-	static val hexArray = "0123456789ABCDEF".toCharArray
+	override ResponseOrError<Void> logIn(String email, String password) {
+		emptyResponseOrError[
+			ApplicationResources.instance.databaseConnectivity.withDatabaseConnection [
+				val authentication = queryClassWhere(
+					DBAuthenticationIdPassword,
+					"id" -> email
+				).head
 
-	protected def static char[] toHexChars(byte[] bytes) {
-		val hexChars = newCharArrayOfSize(bytes.length * 2)
-		for (var i = bytes.length - 1; i >= 0; i--) {
-			val v = bytes.get(i).bitwiseAnd(0xFF)
-			hexChars.set(i * 2, hexArray.get(v >>> 4))
-			hexChars.set(i * 2 + 1, hexArray.get(v.bitwiseAnd(0x0F)))
-		}
-		return hexChars
-	}
+				if (authentication === null) {
+					throw new ClientVisibleException('''Login id «email» does not exist.''')
+				}
+				if (!authentication.digest.compareDigest(password.toCharArray)) {
+					throw new ClientVisibleException('''Incorrect password for login id «email».''')
+				}
 
-	override boolean createAccount(String email, String password) {
-		val user = new DBUser
-		user.alias = new Random().nextLong.toString
-
-		val connectionKey = createConnectionKey
-		val userConnection = new DBUserConnection => [
-			it.digest = connectionKey.toHexChars.createDigest
-			it.user = user
+				val userConnection = new DBUserSession => [
+					it.id = threadLocalRequest.getSession(true).id
+					it.user = authentication.user
+				]
+				withTransaction[saveOrUpdate(userConnection)]
+			]
 		]
-
-		ApplicationResources.instance.databaseConnectivity.databaseTransaction [
-			persist(user)
-			persist(userConnection)
-		]
-
-		//threadLocalRequest.getSession(true).setAttribute()
-		return true
 	}
 }

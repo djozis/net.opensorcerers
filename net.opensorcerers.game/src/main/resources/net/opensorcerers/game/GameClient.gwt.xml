@@ -3,6 +3,8 @@
 <module rename-to="app">
 	<inherits name="com.google.gwt.user.User" />
 	<inherits name="de.itemis.xtend.auto.gwt.AutoGWT" />
+	<inherits name="com.google.gwt.logging.Logging"/>
+	<inherits name="org.gwtbootstrap3.GwtBootstrap3" />
 	<source path="client" />
 	<source path="shared" />
 	<entry-point class="net.opensorcerers.game.client.ClientEntryPoint" />

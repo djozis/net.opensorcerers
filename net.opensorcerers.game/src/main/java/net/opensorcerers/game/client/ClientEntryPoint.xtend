@@ -1,19 +1,18 @@
 package net.opensorcerers.game.client
 
-import com.google.gwt.core.client.GWT
-import com.google.gwt.user.client.ui.Label
+import com.google.gwt.core.client.EntryPoint
 import com.google.gwt.user.client.ui.RootPanel
-import net.opensorcerers.game.client.lib.ChainReaction
-import net.opensorcerers.game.shared.HelloWorldService
-import net.opensorcerers.game.shared.HelloWorldServiceAsync
+import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
+import org.eclipse.xtend.lib.annotations.Accessors
+import org.gwtbootstrap3.client.ui.Label
 
-class ClientEntryPoint extends ChainedEntryPoint {
-	HelloWorldServiceAsync helloWorldService = GWT.create(HelloWorldService)
+@Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
+	LoginWidget loginWidget
 
-	override addOnLoad(extension ChainReaction chain) {
-		return andThen[
-			helloWorldService.getMessage(chainCallback [
-				RootPanel.get.add(new Label(it))
+	override onModuleLoad() {
+		ChainReaction.chain [
+			RootPanel.get.add(loginWidget = new LoginWidget [
+				RootPanel.get.add(new Label("SUCCESS"))
 			])
 		]
 	}

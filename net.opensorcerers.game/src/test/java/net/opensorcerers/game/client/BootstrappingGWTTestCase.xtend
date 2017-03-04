@@ -8,14 +8,16 @@ import com.google.gwt.dev.cfg.ModuleDef
 import com.google.gwt.junit.PropertyDefiningStrategy
 import com.google.gwt.junit.client.GWTTestCase
 import java.util.ArrayList
+import java.util.logging.Logger
 import javax.servlet.annotation.WebServlet
 import net.opensorcerers.coverage.GWTJacocoAdaptor
 import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
-import net.opensorcerers.game.client.lib.ChainReaction
+import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.shared.ServerSideTestProcessingService
 import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
 import net.opensorcerers.util.ReflectionsBootstrap
+import org.eclipse.xtend.lib.annotations.Accessors
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -23,6 +25,8 @@ import org.reflections.scanners.TypeAnnotationsScanner
 import static net.opensorcerers.game.server.ApplicationResources.*
 
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
+	@Accessors val logger = Logger.getLogger(class.simpleName)
+
 	@GwtIncompatible protected static val databaseConnectivity = new H2DatabaseConnectivity
 
 	@GwtIncompatible boolean needServerInitialization = true
@@ -68,16 +72,6 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 
 	@GwtIncompatible def static getCurrentTest() { return currentTest }
 
-	def serverSidePrintln(String toPrint) { println(toPrint) }
-
-	def serverPrintln(String toPrint) {
-		GWT.<ServerSideTestProcessingServiceAsync>create(ServerSideTestProcessingService).callServerSideMethod(
-			"serverSidePrintln",
-			new ArrayList<Object> => [addAll(toPrint)],
-			new ChainReaction().chainCallback[]
-		)
-	}
-
 	/**
 	 * Documentation said do not override or call this method. Didn't say anything about doing both.
 	 */
@@ -97,20 +91,18 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	/**
 	 * Executes one of this test classes methods on the server.
 	 */
-	def addServerMethod(extension ChainReaction chain, String methodName, Object... arguments) {
-		return andThen[
+	def callServerMethod(String methodName, Object... arguments) {
+		ChainReaction.chain [
 			delayTestFinish(60000)
 			GWT.<ServerSideTestProcessingServiceAsync>create(ServerSideTestProcessingService).callServerSideMethod(
 				methodName,
 				new ArrayList<Object> => [addAll(arguments)],
-				chainCallback[]
+				ifSuccessful[]
 			)
 		]
 	}
 
-	def addServerMethod(extension ChainReaction chain, String methodName) {
-		return chain.addServerMethod(methodName, #[])
-	}
+	def callServerMethod(String methodName) { callServerMethod(methodName, #[]) }
 
 	/**
 	 * Exists until release of fix for https://github.com/eclipse/xtext-lib/issues/40
@@ -141,7 +133,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 		GWTJacocoAdaptor.processCoverage(gwtCoverageJsonString)
 	}
 
-	def addUpdateCodeCoverage(extension ChainReaction chain) {
-		return chain.addServerMethod("processUpdateCodeCoverageServer", TestExtensions.gwtCoverageJsonString)
+	def postCodeCoverage() {
+		callServerMethod("processUpdateCodeCoverageServer", TestExtensions.gwtCoverageJsonString)
 	}
 }

@@ -1,84 +1,85 @@
 package net.opensorcerers.game.client
 
 import com.google.gwt.core.shared.GwtIncompatible
-import com.google.gwt.dom.client.Element
-import com.google.gwt.user.client.ui.RootPanel
+import net.opensorcerers.database.entities.DBAuthenticationIdPassword
 import net.opensorcerers.database.entities.DBUser
-import net.opensorcerers.game.client.lib.ChainReaction
+import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import org.junit.Test
 
 import static extension net.opensorcerers.database.bootstrap.DatabaseExtensions.*
 import static extension net.opensorcerers.game.client.TestExtensions.*
-import net.opensorcerers.game.shared.Wrapper
+import static extension net.opensorcerers.util.PasswordHashing.*
 
 class WebappTest extends BootstrappingGWTTestCase {
 	override getModuleName() '''net.opensorcerers.game.GameClient'''
 
-	@Test def void testChainedEntryPoint() {
-		val validationWrapper = new Wrapper(false)
-		val ChainedEntryPoint entryPoint = [andThen[validationWrapper.value = true]]
-		assertFalse(validationWrapper.value)
-		entryPoint.onModuleLoad
-		assertTrue(validationWrapper.value)
+	@GwtIncompatible def void serverSetupTestCreateAccount() {
+		databaseConnectivity.clearDatabase
 	}
 
-	@GwtIncompatible def void serverSetup1() {
-		databaseConnectivity.clearDatabase
-		databaseConnectivity.withDatabaseConnection [
-			withTransaction[
-				persist(new DBUser => [
-					it.alias = "MyUsername"
-				])
-			]
+	@Test def void testCreateAccount() {
+		val entryPoint = new ClientEntryPoint()
+		ChainReaction.chain [
+			callServerMethod("serverSetupTestCreateAccount")
+		].andThen [
+			delayTestFinish(30000)
+			entryPoint.onModuleLoad
+		].andThen [
+			entryPoint.loginWidget.usernameInput.value = "user"
+			entryPoint.loginWidget.passwordInput.value = "pass"
+			entryPoint.loginWidget.createNewAccountCheckbox.value = true
+			entryPoint.loginWidget.submitButton.formSubmit
+		].andThen [
+			assertEquals("Account created", entryPoint.loginWidget.footerText.text)
+		].andThen [
+			postCodeCoverage
+		].andThen [
+			finishTest
 		]
 	}
 
-	@Test def void testApp1() {
-		new ChainReaction [
-			addServerMethod("serverSetup1")
-		].andThen [
-			delayTestFinish(30000)
-			new ClientEntryPoint().addOnLoad(it)
-		].andThen [
-			RootPanel.get.element.childNodes.iterable.map [
-				try {
-					Element.^as(it).innerText
-				} catch (Exception e) {
-					null
-				}
-			].filterNull.toSet.contains(
-				"MyUsername"
-			).assertTrue
-		].addUpdateCodeCoverage.andThen[finishTest].start
-	}
-
-	@GwtIncompatible def void serverSetup2() {
-		databaseConnectivity.clearDatabase
+	@GwtIncompatible def void serverValidateCreateAccount() {
 		databaseConnectivity.withDatabaseConnection [
-			withTransaction[
-				persist(new DBUser => [
-					it.alias = "YourUsername"
-				])
-			]
+			assertEquals(1, queryClassWhere(
+				DBAuthenticationIdPassword,
+				"id" -> "user"
+			).size)
 		]
 	}
 
-	@Test def void testApp2() {
-		new ChainReaction [
-			addServerMethod("serverSetup2")
+	@GwtIncompatible def void serverSetupTestLogIntoAccount() {
+		databaseConnectivity.clearDatabase
+		val user = new DBUser => [
+			alias = "alias"
+		]
+		val authentication = new DBAuthenticationIdPassword => [
+			it.id = "user2"
+			it.digest = "pass2".toCharArray.createDigest
+			it.user = user
+		]
+		databaseConnectivity.databaseTransaction [
+			persist(user)
+			persist(authentication)
+		]
+	}
+
+	@Test def void testLogIntoAccount() {
+		val entryPoint = new ClientEntryPoint()
+		ChainReaction.chain [
+			callServerMethod("serverSetupTestLogIntoAccount")
 		].andThen [
 			delayTestFinish(30000)
-			new ClientEntryPoint().addOnLoad(it)
+			entryPoint.onModuleLoad
 		].andThen [
-			RootPanel.get.element.childNodes.iterable.map [
-				try {
-					Element.^as(it).innerText
-				} catch (Exception e) {
-					null
-				}
-			].filterNull.toSet.contains(
-				"YourUsername"
-			).assertTrue
-		].addUpdateCodeCoverage.andThen[finishTest].start
+			entryPoint.loginWidget.usernameInput.value = "user2"
+			entryPoint.loginWidget.passwordInput.value = "pass2"
+			entryPoint.loginWidget.submitButton.formSubmit
+		].andThen [
+			assertEquals("Log in successful", entryPoint.loginWidget.footerText.text)
+		].andThen [
+			postCodeCoverage
+		].andThen [
+			finishTest
+		]
 	}
 }
