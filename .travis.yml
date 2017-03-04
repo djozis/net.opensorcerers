@@ -3,6 +3,6 @@ jdk:
   - oraclejdk8
 sudo: true # Required or unit tests seems to fail for some reason?
 after_success:
- - ./gradlew test check jacocoTestReport
+ - ./gradlew jacocoTestReport
  - bash <(curl -s https://codecov.io/bash)
  - ./gradlew coveralls
