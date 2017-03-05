@@ -100,6 +100,11 @@ jacocoTestReport {
         html.enabled = true
     }
     executionData(file("build/GWTJacocoAdaptor/jacoco.exec"))
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: 'net/opensorcerers/language/**')
+        })
+    }
 }
 apply plugin: 'com.github.kt3k.coveralls'
 tasks.coveralls {
