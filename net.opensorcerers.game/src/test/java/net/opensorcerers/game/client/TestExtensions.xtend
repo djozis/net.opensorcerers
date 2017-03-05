@@ -2,9 +2,11 @@ package net.opensorcerers.game.client
 
 import com.google.gwt.dom.client.Node
 import com.google.gwt.dom.client.NodeList
+import com.google.gwt.event.logical.shared.ValueChangeEvent
 import com.google.gwt.user.client.ui.Widget
 import java.util.Iterator
 import org.gwtbootstrap3.client.ui.Button
+import org.gwtbootstrap3.client.ui.CheckBox
 import org.gwtbootstrap3.client.ui.Form
 
 class TestExtensions extends TestJavascriptExtensions {
@@ -21,7 +23,7 @@ class TestExtensions extends TestJavascriptExtensions {
 		]
 	}
 
-	def static formSubmit(Button button) {
+	def static clickFormSubmit(Button button) {
 		var Widget form = button
 		while (!(form instanceof Form)) {
 			form = form.parent
@@ -30,5 +32,10 @@ class TestExtensions extends TestJavascriptExtensions {
 			}
 		}
 		(form as Form).submit
+	}
+
+	def static clickToggle(CheckBox checkbox) {
+		checkbox.value = !checkbox.value
+		ValueChangeEvent.fire(checkbox, checkbox.value)
 	}
 }

@@ -60,10 +60,10 @@ import static extension net.opensorcerers.util.PasswordHashing.*
 				).head
 
 				if (authentication === null) {
-					throw new ClientVisibleException('''Login id «email» does not exist.''')
+					throw new ClientVisibleException('''Login id "«email»" does not exist''')
 				}
 				if (!authentication.digest.compareDigest(password.toCharArray)) {
-					throw new ClientVisibleException('''Incorrect password for login id «email».''')
+					throw new ClientVisibleException('''Incorrect password for login id "«email»"''')
 				}
 
 				val userConnection = new DBUserSession => [

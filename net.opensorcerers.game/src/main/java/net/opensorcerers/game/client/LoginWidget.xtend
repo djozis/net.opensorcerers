@@ -26,7 +26,7 @@ import org.gwtbootstrap3.client.ui.html.Text
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
 @Accessors(PUBLIC_GETTER) class LoginWidget extends Composite {
-	val AuthenticationServiceAsync authenticationService = GWT.create(AuthenticationService)
+	@Accessors(NONE) val AuthenticationServiceAsync authenticationService = GWT.create(AuthenticationService)
 
 	Text footerText
 	Input usernameInput
@@ -83,7 +83,6 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 										onSuccessfulAuthentication.apply(this)
 									].ifFailure [
 										footerText.text = message
-										throw it
 									]
 								)
 							} else {
