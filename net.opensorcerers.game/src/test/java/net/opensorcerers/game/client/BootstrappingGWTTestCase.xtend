@@ -12,8 +12,10 @@ import java.util.logging.Logger
 import javax.servlet.annotation.WebServlet
 import net.opensorcerers.coverage.GWTJacocoAdaptor
 import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
+import net.opensorcerers.game.client.lib.chainreaction.ChainLinkAPI
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
+import net.opensorcerers.game.shared.ResponseOrError
 import net.opensorcerers.game.shared.ServerSideTestProcessingService
 import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
 import net.opensorcerers.util.ReflectionsBootstrap
@@ -104,24 +106,31 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 
 	def callServerMethod(String methodName) { callServerMethod(methodName, #[]) }
 
-	/**
-	 * Exists until release of fix for https://github.com/eclipse/xtext-lib/issues/40
-	 * Marking Deprecated until then.
-	 */
-	@Deprecated def void afterInjectScript(String scriptPath, ()=>void callback) {
-		val path = "" // '''/«moduleName».JUnit/«scriptPath»'''  
-		ScriptInjector.fromUrl(path).setWindow(
-			ScriptInjector.TOP_WINDOW
-		).setCallback(callbackOrTestFailure[callback.apply]).inject
+	def void injectScripts(String... scriptPaths) {
+		ChainReaction.chain [
+			delayTestFinish(10000)
+			for (scriptPath : scriptPaths) {
+				// '''/«moduleName».JUnit/«scriptPath»'''
+				ScriptInjector.fromUrl("/" + moduleName + ".JUnit/" + scriptPath).setWindow(
+					ScriptInjector.TOP_WINDOW
+				).setCallback(callbackOrTestFailure[]).inject
+			}
+		]
 	}
 
-	def static <T, F> Callback<T, F> callbackOrTestFailure((T)=>void handler) {
+	def static <T, F> Callback<T, F> callbackOrTestFailure(ChainLinkAPI chain, (T)=>void handler) {
 		return new Callback<T, F>() {
-			override onSuccess(T result) { handler.apply(result) }
+			val delegate = chain.ifSuccessful(handler).ifFailure[throw it]
+
+			override onSuccess(T result) {
+				delegate.onSuccess(new ResponseOrError<T> => [
+					it.result = result
+				])
+			}
 
 			override onFailure(F caught) {
 				if (caught instanceof Throwable) {
-					throw caught as Throwable
+					delegate.onFailure(caught)
 				} else {
 					fail(caught.toString)
 				}

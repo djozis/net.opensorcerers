@@ -11,7 +11,7 @@ import static extension net.opensorcerers.game.client.TestExtensions.*
 import static extension net.opensorcerers.util.PasswordHashing.*
 
 class WebappTest extends BootstrappingGWTTestCase {
-	override getModuleName() '''net.opensorcerers.game.GameClient'''
+	override getModuleName() { "net.opensorcerers.game.GameClient" }
 
 	@GwtIncompatible def void serverSetupTestCreateAccount() {
 		databaseConnectivity.clearDatabase
@@ -21,6 +21,10 @@ class WebappTest extends BootstrappingGWTTestCase {
 		val entryPoint = new ClientEntryPoint()
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestCreateAccount")
+		].andThen [
+			injectScripts("webjars/sockjs-client/1.1.2/sockjs.min.js")
+		].andThen [
+			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [
 			delayTestFinish(30000)
 			entryPoint.onModuleLoad
@@ -76,6 +80,10 @@ class WebappTest extends BootstrappingGWTTestCase {
 		val entryPoint = new ClientEntryPoint()
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestLogIntoAccount")
+		].andThen [
+			injectScripts("webjars/sockjs-client/1.1.2/sockjs.min.js")
+		].andThen [
+			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [
 			delayTestFinish(30000)
 			entryPoint.onModuleLoad
