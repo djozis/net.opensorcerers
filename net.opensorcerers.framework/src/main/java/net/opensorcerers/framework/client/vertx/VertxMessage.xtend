@@ -1,4 +1,4 @@
-package net.opensorcerers.game.client.lib
+package net.opensorcerers.framework.client.vertx
 
 import jsinterop.annotations.JsProperty
 import jsinterop.annotations.JsType

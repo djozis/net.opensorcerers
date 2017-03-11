@@ -2,13 +2,13 @@ package net.opensorcerers.game.client
 
 import com.google.gwt.core.client.EntryPoint
 import com.google.gwt.user.client.ui.RootPanel
+import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.game.client.lib.Console
-import net.opensorcerers.game.client.lib.VertxEventBus
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
+import net.opensorcerers.game.shared.TestPOJO
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
-import net.opensorcerers.game.shared.TestPOJO
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	LoginWidget loginWidget

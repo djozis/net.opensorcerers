@@ -2,8 +2,8 @@ package net.opensorcerers.framework.server
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 import com.google.gson.JsonPrimitive
-import java.util.ArrayList
 import java.util.Collection
 
 class JsonSerializationServer {
@@ -31,13 +31,23 @@ class JsonSerializationServer {
 	def static <T> serializeIterable(Iterable<T> values, (T)=>JsonElement mapper) {
 		val result = new JsonArray
 		for (value : values) {
-			result.add(mapper.apply(value))
+			if (value === null) {
+				result.add(JsonNull.INSTANCE)
+			} else {
+				result.add(mapper.apply(value))
+			}
 		}
 		return result
 	}
 
 	def static <T, C extends Collection<T>> deserializeIterable(JsonElement values, (JsonElement)=>T mapper, C output) {
-		output.addAll(values.asJsonArray.map(mapper))
+		for (value : values.asJsonArray) {
+			if (value === null || value.isJsonNull) {
+				output.add(null)
+			} else {
+				output.add(mapper.apply(value))
+			}
+		}
 		return output
 	}
 }

@@ -1,10 +1,10 @@
 package net.opensorcerers.framework.client
 
 import com.google.gwt.json.client.JSONArray
+import com.google.gwt.json.client.JSONNull
 import com.google.gwt.json.client.JSONNumber
 import com.google.gwt.json.client.JSONString
 import com.google.gwt.json.client.JSONValue
-import java.util.ArrayList
 import java.util.Collection
 
 class JsonSerializationClient {
@@ -33,7 +33,11 @@ class JsonSerializationClient {
 		val result = new JSONArray
 		var i = 0
 		for (value : values) {
-			result.set(i++, mapper.apply(value))
+			if (value === null) {
+				result.set(i++, JSONNull.instance)
+			} else {
+				result.set(i++, mapper.apply(value))
+			}
 		}
 		return result
 	}
@@ -42,7 +46,12 @@ class JsonSerializationClient {
 		val array = values.array
 		val size = array.size
 		for (var i = 0; i < size; i++) {
-			output.add(mapper.apply(array.get(i)))
+			val value = array.get(i)
+			if (value === null || value.^null !== null) {
+				output.add(null)
+			} else {
+				output.add(mapper.apply(value))
+			}
 		}
 		return output
 	}

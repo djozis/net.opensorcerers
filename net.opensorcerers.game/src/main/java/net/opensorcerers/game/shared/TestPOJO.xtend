@@ -2,12 +2,11 @@ package net.opensorcerers.game.shared
 
 import java.util.ArrayList
 import java.util.HashSet
-import net.opensorcerers.framework.annotations.JsonSerializationMethods
 import org.eclipse.xtend.lib.annotations.Accessors
+import net.opensorcerers.framework.annotations.ImplementStaticJsonSerialization
 
-@Accessors @JsonSerializationMethods class TestPOJO {
+@Accessors @ImplementStaticJsonSerialization class TestPOJO {
 	String a
-	String b
-	int k
-	ArrayList<HashSet<TestPOJO2>> x
+	int b
+	ArrayList<HashSet<TestPOJO2>> d
 }

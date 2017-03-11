@@ -1,9 +1,11 @@
 package net.opensorcerers.game.server
 
-import java.util.List
+import com.google.gwt.user.client.rpc.AsyncCallback
+import java.util.ArrayList
+import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 
-//@GwtVertxServerService class TestClassImpl {
-//	override List<String> ok(String x) {
-//		return #[x]
-//	}
-//}
+@ImplementFrameworkServerService class TestClassImpl {
+	override void sayHello(String x, AsyncCallback<ArrayList<String>> callback) {
+		callback.onSuccess(new ArrayList<String> => [add('''Hello: «x»''')])
+	}
+}
