@@ -3,12 +3,13 @@ buildscript {
 		jcenter()
 	}
 	dependencies {
-		classpath 'org.xtext:xtext-gradle-plugin:1.0.15'
+		classpath 'org.xtext:xtext-gradle-plugin:1.0.17'
 	}
 }
 
 subprojects {
 	ext.xtextVersion = '2.11.0'
+    ext.gwtVersion = '2.8.0'
 	repositories {
 		jcenter()
 	}
@@ -24,7 +25,7 @@ subprojects {
     eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 	
-	group = 'net.opensorcerers.language'
+	group = 'net.opensorcerers'
 	version = '1.0.0-SNAPSHOT'
 	
 	sourceCompatibility = '1.8'

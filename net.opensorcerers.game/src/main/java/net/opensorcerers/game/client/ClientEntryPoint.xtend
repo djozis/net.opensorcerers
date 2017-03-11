@@ -8,6 +8,7 @@ import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
+import net.opensorcerers.game.shared.TestPOJO
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	LoginWidget loginWidget
@@ -27,10 +28,10 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 					RootPanel.get.add(new Paragraph => [
 						text = "Vertx event bus opened"
 					])
-					eventBus.<String>registerHandler("world") [ error, message |
+					eventBus.<TestPOJO>registerHandler("world") [ error, message |
 						Console.log("World handler:")
-						Console.log(message)
-						RootPanel.get.add(new Paragraph => [text = message.body])
+						Console.log(message.body)
+						RootPanel.get.add(new Paragraph => [text = message.body.toString])
 						message.reply("I heard you on world")
 					]
 					eventBus.<String>send("greet", "Client says hi", null) [ error, message |

@@ -1,12 +1,14 @@
 package net.opensorcerers.game.server
 
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.ErrorHandler
 import io.vertx.ext.web.handler.sockjs.BridgeOptions
 import io.vertx.ext.web.handler.sockjs.PermittedOptions
 import io.vertx.ext.web.handler.sockjs.SockJSHandler
+import javax.xml.ws.Holder
 
 class HelloWorldServiceVerticle extends AbstractVerticle {
 	override void start() {
@@ -17,9 +19,6 @@ class HelloWorldServiceVerticle extends AbstractVerticle {
 		router.route().failureHandler(errorHandler());
 		vertx.eventBus.consumer("greet") [ message |
 			message.reply("Greet from Vert.x with: " + message.body)
-			vertx.eventBus.<String>send("world", "World from Vert.x! " + message.body) [
-				println(result?.body ?: cause)
-			]
 		]
 
 		vertx.createHttpServer().requestHandler[router.accept(it)].listen(17632)
@@ -59,7 +58,10 @@ class HelloWorldServiceVerticle extends AbstractVerticle {
 		router.route().produces("application/json");
 
 		router.get("/zz").handler [ context |
-			context.vertx.eventBus().<String>send("world", "World from Vert.x!") [
+			context.vertx.eventBus().<String>send("world", new JsonObject => [
+				it.put("a", "cats")
+				it.put("b", "dogs")
+			]) [
 				println(result ?: cause)
 			]
 

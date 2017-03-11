@@ -1,3 +1,4 @@
 include 'net.opensorcerers.language'
 include 'net.opensorcerers.language.ide'
+include 'net.opensorcerers.framework'
 include 'net.opensorcerers.game'
