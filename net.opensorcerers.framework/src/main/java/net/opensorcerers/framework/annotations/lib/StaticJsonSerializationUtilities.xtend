@@ -10,7 +10,6 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.macro.TransformationContext
 import org.eclipse.xtend.lib.macro.declaration.ClassDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableClassDeclaration
-import org.eclipse.xtend.lib.macro.declaration.MutableFieldDeclaration
 import org.eclipse.xtend.lib.macro.declaration.Type
 import org.eclipse.xtend.lib.macro.declaration.TypeReference
 import org.eclipse.xtend.lib.macro.declaration.Declaration

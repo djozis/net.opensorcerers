@@ -3,12 +3,17 @@ package net.opensorcerers.framework.annotations
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
+import com.google.gwt.json.client.JSONArray
+import com.google.gwt.json.client.JSONNull
+import com.google.gwt.json.client.JSONNumber
 import com.google.gwt.user.client.rpc.AsyncCallback
 import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.Target
 import java.util.function.BiConsumer
 import net.opensorcerers.framework.annotations.lib.StaticJsonSerializationUtilities
+import net.opensorcerers.framework.client.FrameworkServerServiceProxy
+import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.framework.server.FrameworkServerServiceBase
 import org.eclipse.xtend.lib.macro.AbstractClassProcessor
 import org.eclipse.xtend.lib.macro.Active
@@ -63,9 +68,6 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 
 		val transformingClass = it
 
-		extendedClass = FrameworkServerServiceBase.newTypeReference
-		implementedInterfaces = implementedInterfaces + #[interfaceType.newTypeReference]
-
 		val methodConsumersType = BiConsumer.newTypeReference(
 			JsonArray.newTypeReference,
 			AsyncCallback.newTypeReference(JsonElement.newTypeReference)
@@ -82,6 +84,13 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 		]
 
 		addMethod("getAddress") [
+			primarySourceElement = transformingClass.primarySourceElement
+			addAnnotation(Override.newAnnotationReference)
+			visibility = Visibility::PROTECTED
+			returnType = String.newTypeReference
+			body = '''return "«transformingClass.interfaceSimpleName.toFirstLower»";'''
+		]
+		proxyType.addMethod("getAddress") [
 			primarySourceElement = transformingClass.primarySourceElement
 			addAnnotation(Override.newAnnotationReference)
 			visibility = Visibility::PROTECTED
@@ -109,20 +118,42 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 
 		val fieldVar = "f"
 		val resultVar = "r"
+		val arrayName = "message"
 		// This must be done before method body so that addError works.
 		val resultTypeSerializationOperations = serviceMethods.toMap([it]) [ serviceMethod |
 			val resultParameter = serviceMethod.parameters.last
-			resultParameter.serializeServerField(resultParameter.type.actualTypeArguments.head, resultVar, 0)
+			return #{
+				SERIALIZE_SERVER_METHOD_NAME ->
+					resultParameter.serializeServerField(resultParameter.type.actualTypeArguments.head, resultVar, 0),
+				DESERIALIZE_CLIENT_METHOD_NAME ->
+					resultParameter.deserializeClientField(resultParameter.type.actualTypeArguments.head, resultVar, 0)
+			}
 		]
 		val parameterSerializationOperations = serviceMethods.toMap([it]) [ serviceMethod |
 			serviceMethod.serviceMethodParameters.toMap([it]) [ parameter |
 				#{
-					DESERIALIZE_SERVER_METHOD_NAME -> parameter.deserializeServerField(parameter.type, fieldVar, 0)
+					DESERIALIZE_SERVER_METHOD_NAME -> parameter.deserializeServerField(parameter.type, fieldVar, 0),
+					SERIALIZE_CLIENT_METHOD_NAME ->
+						parameter.serializeClientField(parameter.type, parameter.simpleName, 0)
 				}
 			]
 		]
 
+		extendedClass = FrameworkServerServiceBase.newTypeReference
+		implementedInterfaces = implementedInterfaces + #[interfaceType.newTypeReference]
+		proxyType.extendedClass = FrameworkServerServiceProxy.newTypeReference
+		proxyType.implementedInterfaces = proxyType.implementedInterfaces + #[interfaceType.newTypeReference]
+		proxyType.addConstructor[
+			visibility = Visibility::PUBLIC
+			primarySourceElement = transformingClass.primarySourceElement
+			addParameter("eventBus", VertxEventBus.newTypeReference)
+			body = '''
+				super(eventBus);
+			'''
+		]
+		var serviceMethodIndexCounter = 0
 		for (serviceMethod : serviceMethods) {
+			val serviceMethodIndex = serviceMethodIndexCounter++
 			if (serviceMethod.returnType != void.newTypeReference) {
 				serviceMethod.returnType.addError("Public methods on services must return void")
 			} else if (serviceMethod.parameters.last.type.type.qualifiedName != AsyncCallback.name) {
@@ -130,11 +161,12 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 					"Public methods on services must have an AsyncCallback as their last argument but found " +
 						serviceMethod.parameters.last.type.type.qualifiedName)
 			} else {
+				val resultParameter = serviceMethod.parameters.last
+				val resultParameterCallbackType = resultParameter.type.actualTypeArguments.head
 				serviceMethodConsumerClasses.get(serviceMethod).addMethod("accept") [
 					primarySourceElement = serviceMethod.primarySourceElement
 					returnType = void.newTypeReference
 					visibility = Visibility::PUBLIC
-					val arrayName = "message"
 					addParameter(arrayName, JsonArray.newTypeReference)
 					addParameter("resultCallback", AsyncCallback.newTypeReference(JsonElement.newTypeReference))
 					body = '''
@@ -164,16 +196,15 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 						«ENDFOR»
 						«serviceMethod.simpleName»(
 							«serviceMethod.serviceMethodParameters.map[valueVariableName].join(", ")»,
-							«val resultParameter = serviceMethod.parameters.last»
 							new «resultParameter.type.toString»() {
-								@Override public void onSuccess(«resultParameter.type.actualTypeArguments.head.toString» «resultVar») {
+								@Override public void onSuccess(«resultParameterCallbackType.toString» «resultVar») {
 									«JsonElement.name» serializedResult;
 									«IF !resultParameter.type.primitive»
 										if («resultVar» == null) {
 											serializedResult = «JsonNull.name».INSTANCE;
 										} else
 									«ENDIF»
-									«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod)»
+									«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(SERIALIZE_SERVER_METHOD_NAME)»
 									«IF conversionExpression === null»
 										«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
 											"Don't know how to server-serialize «resultParameter.type.name» «resultParameter.simpleName»"
@@ -191,13 +222,6 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 						);
 					'''
 				]
-				interfaceType.addMethod(serviceMethod.simpleName) [
-					primarySourceElement = serviceMethod.primarySourceElement
-					returnType = serviceMethod.returnType
-					for (parameter : serviceMethod.parameters) {
-						addParameter(parameter.simpleName, parameter.type)
-					}
-				]
 				proxyType.addMethod(serviceMethod.simpleName) [
 					primarySourceElement = serviceMethod.primarySourceElement
 					returnType = serviceMethod.returnType
@@ -205,8 +229,57 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 						addParameter(parameter.simpleName, parameter.type)
 					}
 					body = '''
-						
+						«JSONArray.name» «arrayName» = new «JSONArray.name»();
+						«arrayName».set(0, new «JSONNumber.name»(«serviceMethodIndex»));
+						«var arrayIndex = 1»
+						«FOR parameter : serviceMethod.serviceMethodParameters»
+							«val fieldIndex = arrayIndex++»
+							«IF !parameter.type.primitive»
+								if («parameter.simpleName» == null) {
+									«arrayName».set(«fieldIndex», «JSONNull.name».getInstance());
+								} else
+							«ENDIF»
+							«val conversionExpression = parameterSerializationOperations.get(serviceMethod).get(parameter).get(SERIALIZE_CLIENT_METHOD_NAME)»
+							«IF conversionExpression === null»
+								«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
+									"Don't know how to client-serialize «parameter.type.name» «parameter.simpleName»"
+								));
+							«ELSE»
+								«arrayName».set(«fieldIndex», «conversionExpression»);
+							«ENDIF»
+						«ENDFOR»
+						sendRequest(«arrayName»,
+							new «AsyncCallback.name»<«JSONArray.name»>() {
+								@Override public void onSuccess(«JSONArray.name» «resultVar») {
+									«resultParameterCallbackType.toString» deserializedResult;
+									if («resultVar» == null || «resultVar».isNull() != null) {
+										deserializedResult = null;
+									} else {
+										«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(DESERIALIZE_CLIENT_METHOD_NAME)»
+										«IF conversionExpression === null»
+											«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
+												"Don't know how to client-deserialize «resultParameterCallbackType.name» in «resultParameter.simpleName»"
+											));
+										«ELSE»
+											deserializedResult = «conversionExpression»;
+										«ENDIF»
+									}
+									«resultParameter.simpleName».onSuccess(deserializedResult);
+								}
+								
+								@Override public void onFailure(Throwable caught) {
+									«resultParameter.simpleName».onFailure(caught);
+								}
+							}
+						);
 					'''
+				]
+				interfaceType.addMethod(serviceMethod.simpleName) [
+					primarySourceElement = serviceMethod.primarySourceElement
+					returnType = serviceMethod.returnType
+					for (parameter : serviceMethod.parameters) {
+						addParameter(parameter.simpleName, parameter.type)
+					}
 				]
 			}
 		}

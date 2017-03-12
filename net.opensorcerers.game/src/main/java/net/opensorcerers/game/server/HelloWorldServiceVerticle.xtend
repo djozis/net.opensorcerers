@@ -29,10 +29,10 @@ class HelloWorldServiceVerticle extends AbstractVerticle {
 	private def SockJSHandler eventBusHandler() {
 		return SockJSHandler.create(vertx).bridge(new BridgeOptions => [
 			addOutboundPermitted(new PermittedOptions => [
-				address = "world"
+				addressRegex = ".*"
 			])
 			addInboundPermitted(new PermittedOptions => [
-				address = "greet"
+				addressRegex = ".*"
 			])
 		]) [ event |
 			switch event.type {

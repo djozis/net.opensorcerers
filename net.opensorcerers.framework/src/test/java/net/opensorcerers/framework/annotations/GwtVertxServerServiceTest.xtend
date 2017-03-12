@@ -5,5 +5,4 @@ import org.junit.Test
 
 class GwtVertxServerServiceTest {
 	extension XtendCompilerTester compiler = XtendCompilerTester.newXtendCompilerTester(class.classLoader)
-	
 }

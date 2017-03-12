@@ -21,6 +21,7 @@ class ApplicationResources implements Closeable {
 			deployVerticle(new HelloWorldServiceVerticle) [
 				println("Deployed to Vertx: " + it.succeeded)
 			]
+			deployVerticle(new TestClassImpl)
 		]
 	}
 

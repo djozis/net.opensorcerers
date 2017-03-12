@@ -9,6 +9,8 @@ import net.opensorcerers.game.shared.TestPOJO
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
+import com.google.gwt.user.client.rpc.AsyncCallback
+import java.util.ArrayList
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	LoginWidget loginWidget
@@ -38,6 +40,15 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 						Console.log("Greet response:")
 						Console.log(message)
 					]
+					new TestClassProxy(eventBus).sayHello("mystring", new AsyncCallback<ArrayList<String>> {
+						override onFailure(Throwable caught) {
+							RootPanel.get.add(new Paragraph => [text = caught.toString])
+						}
+
+						override onSuccess(ArrayList<String> result) {
+							RootPanel.get.add(new Paragraph => [text = result.toString])
+						}
+					})
 				]
 			]
 		]
