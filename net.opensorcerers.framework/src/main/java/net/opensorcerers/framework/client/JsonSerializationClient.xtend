@@ -29,6 +29,14 @@ class JsonSerializationClient {
 
 	def static deserializeString(JSONValue value) { return value.string.stringValue }
 
+	def static JSONValue serialize(Void void) {
+		throw new UnsupportedOperationException("This should never happen due to null checking")
+	}
+
+	def static Void deserializeVoid(JSONValue value) {
+		throw new UnsupportedOperationException("This should never happen due to null checking")
+	}
+
 	def static <T> serializeIterable(Iterable<T> values, (T)=>JSONValue mapper) {
 		val result = new JSONArray
 		var i = 0

@@ -8,17 +8,18 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.util.function.BiConsumer
 import com.google.gson.JsonElement
+import org.eclipse.xtext.xbase.lib.Procedures.Procedure3
 
 abstract class FrameworkServerServiceBase extends AbstractVerticle {
 	protected def String getAddress()
 
-	protected def BiConsumer<JsonArray, AsyncCallback<JsonElement>>[] getMethodConsumers()
+	protected def Procedure3<? extends FrameworkServerServiceBase, JsonArray, AsyncCallback<JsonElement>>[] getMethodConsumers()
 
 	var MessageConsumer<?> consumer
 
-	protected def void handleMessage(JsonArray message, AsyncCallback<JsonElement> resultCallback) {
+	protected def static void handleMessage(FrameworkServerServiceBase it, JsonArray message,
+		AsyncCallback<JsonElement> resultCallback) {
 		val methodConsumers = methodConsumers
 		val methodIndex = message.get(0).asInt
 		if (methodIndex < 0 || methodIndex >= methodConsumers.length) {
@@ -26,7 +27,13 @@ abstract class FrameworkServerServiceBase extends AbstractVerticle {
 				'''Tried to call method #«methodIndex» on «class.name» which has only has methods #0 .. #«methodConsumers.length-1»'''
 			)
 		}
-		methodConsumers.get(methodIndex).accept(message, resultCallback)
+		(methodConsumers.get(
+			methodIndex
+		) as Procedure3<FrameworkServerServiceBase, JsonArray, AsyncCallback<JsonElement>>).apply(
+			it,
+			message,
+			resultCallback
+		)
 	}
 
 	override void start() {
@@ -54,7 +61,7 @@ abstract class FrameworkServerServiceBase extends AbstractVerticle {
 				}
 			}
 			try {
-				handleMessage(new JsonParser().parse(message.body).asJsonArray, resultCallback)
+				this.handleMessage(new JsonParser().parse(message.body).asJsonArray, resultCallback)
 			} catch (Throwable e) {
 				resultCallback.onFailure(e)
 			}

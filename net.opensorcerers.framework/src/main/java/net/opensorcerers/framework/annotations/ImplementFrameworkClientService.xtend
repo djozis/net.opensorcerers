@@ -3,18 +3,18 @@ package net.opensorcerers.framework.annotations
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
+import com.google.gson.JsonPrimitive
 import com.google.gwt.json.client.JSONArray
 import com.google.gwt.json.client.JSONNull
-import com.google.gwt.json.client.JSONNumber
 import com.google.gwt.json.client.JSONValue
 import com.google.gwt.user.client.rpc.AsyncCallback
+import io.vertx.core.eventbus.EventBus
 import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.Target
 import net.opensorcerers.framework.annotations.lib.StaticJsonSerializationUtilities
-import net.opensorcerers.framework.client.FrameworkServerServiceProxy
-import net.opensorcerers.framework.client.vertx.VertxEventBus
-import net.opensorcerers.framework.server.FrameworkServerServiceBase
+import net.opensorcerers.framework.client.FrameworkClientServiceBase
+import net.opensorcerers.framework.server.FrameworkClientServiceProxy
 import org.eclipse.xtend.lib.macro.AbstractClassProcessor
 import org.eclipse.xtend.lib.macro.Active
 import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
@@ -29,12 +29,12 @@ import org.eclipse.xtext.xbase.lib.Procedures.Procedure3
 import static net.opensorcerers.framework.annotations.lib.StaticJsonSerializationUtilities.*
 
 @Target(ElementType.TYPE)
-@Active(ImplementFrameworkServerServiceProcessor)
+@Active(ImplementFrameworkClientServiceProcessor)
 @Retention(SOURCE)
-annotation ImplementFrameworkServerService {
+annotation ImplementFrameworkClientService {
 }
 
-class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
+class ImplementFrameworkClientServiceProcessor extends AbstractClassProcessor {
 	static val IMPL = "Impl"
 	static val SERVER = ".server"
 	static val SHARED = ".shared"
@@ -53,8 +53,8 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 			addError('''The name must end with '«IMPL»'.''')
 		}
 
-		if (!packageName.contains(SERVER)) {
-			addError("A server service must reside under the 'server' package.")
+		if (!packageName.contains(CLIENT)) {
+			addError("A client service must reside under the 'client' package.")
 		}
 
 		if (extendedClass != Object.newTypeReference) {
@@ -70,8 +70,8 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 
 		val methodConsumersType = Procedure3.newTypeReference(
 			transformingClass.newTypeReference,
-			JsonArray.newTypeReference,
-			AsyncCallback.newTypeReference(JsonElement.newTypeReference)
+			JSONArray.newTypeReference,
+			AsyncCallback.newTypeReference(JSONValue.newTypeReference)
 		)
 
 		val serviceMethods = serviceMethods
@@ -125,32 +125,33 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 		val resultTypeSerializationOperations = serviceMethods.toMap([it]) [ serviceMethod |
 			val resultParameter = serviceMethod.parameters.last
 			return #{
-				SERIALIZE_SERVER_METHOD_NAME ->
-					resultParameter.serializeServerField(resultParameter.type.actualTypeArguments.head, resultVar, 0),
-				DESERIALIZE_CLIENT_METHOD_NAME ->
-					resultParameter.deserializeClientField(resultParameter.type.actualTypeArguments.head, resultVar, 0)
+				SERIALIZE_CLIENT_METHOD_NAME ->
+					resultParameter.serializeClientField(resultParameter.type.actualTypeArguments.head, resultVar, 0),
+				DESERIALIZE_SERVER_METHOD_NAME ->
+					resultParameter.deserializeServerField(resultParameter.type.actualTypeArguments.head, resultVar, 0)
 			}
 		]
 		val parameterSerializationOperations = serviceMethods.toMap([it]) [ serviceMethod |
 			serviceMethod.serviceMethodParameters.toMap([it]) [ parameter |
 				#{
-					DESERIALIZE_SERVER_METHOD_NAME -> parameter.deserializeServerField(parameter.type, fieldVar, 0),
-					SERIALIZE_CLIENT_METHOD_NAME ->
-						parameter.serializeClientField(parameter.type, parameter.simpleName, 0)
+					DESERIALIZE_CLIENT_METHOD_NAME -> parameter.deserializeClientField(parameter.type, fieldVar, 0),
+					SERIALIZE_SERVER_METHOD_NAME ->
+						parameter.serializeServerField(parameter.type, parameter.simpleName, 0)
 				}
 			]
 		]
 
-		extendedClass = FrameworkServerServiceBase.newTypeReference
+		extendedClass = FrameworkClientServiceBase.newTypeReference
 		implementedInterfaces = implementedInterfaces + #[interfaceType.newTypeReference]
-		proxyType.extendedClass = FrameworkServerServiceProxy.newTypeReference
+		proxyType.extendedClass = FrameworkClientServiceProxy.newTypeReference
 		proxyType.implementedInterfaces = proxyType.implementedInterfaces + #[interfaceType.newTypeReference]
 		proxyType.addConstructor [
 			visibility = Visibility::PUBLIC
 			primarySourceElement = transformingClass.primarySourceElement
-			addParameter("eventBus", VertxEventBus.newTypeReference)
+			addParameter("eventBus", EventBus.newTypeReference)
+			addParameter("sessionId", String.newTypeReference)
 			body = '''
-				super(eventBus);
+				super(eventBus, sessionId);
 			'''
 		]
 		var serviceMethodIndexCounter = 0
@@ -170,24 +171,24 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 					returnType = void.newTypeReference
 					visibility = Visibility::PUBLIC
 					addParameter("it", transformingClass.newTypeReference)
-					addParameter(arrayName, JsonArray.newTypeReference)
-					addParameter("resultCallback", AsyncCallback.newTypeReference(JsonElement.newTypeReference))
+					addParameter(arrayName, JSONArray.newTypeReference)
+					addParameter("resultCallback", AsyncCallback.newTypeReference(JSONValue.newTypeReference))
 					body = '''
 						«var arrayIndex = 1 /* skip method number which is index 0 */ »
-						«JsonElement.name» «fieldVar»;
+						«JSONValue.name» «fieldVar»;
 						«FOR parameter : serviceMethod.serviceMethodParameters»
 							«fieldVar» = «arrayName».get(«arrayIndex++»);
 							«parameter.type.toString» «parameter.valueVariableName»;
-							if («fieldVar» == null || «fieldVar».isJsonNull()) {
+							if («fieldVar» == null || «fieldVar».isNull() != null) {
 								«IF parameter.type.primitive»
 									throw new «NullPointerException.name»(
-										"«transformingClass.qualifiedName».«serviceMethod.simpleName» parameter «simpleName» received a null JsonElement for primitive field «parameter.simpleName»."
+										"«transformingClass.qualifiedName».«serviceMethod.simpleName» parameter «simpleName» received a null JSONValue for primitive field «parameter.simpleName»."
 									);
 								«ELSE»
 									«parameter.valueVariableName» = null;
 								«ENDIF»
 							} else {
-								«val conversionExpression = parameterSerializationOperations.get(serviceMethod).get(parameter).get(DESERIALIZE_SERVER_METHOD_NAME)»
+								«val conversionExpression = parameterSerializationOperations.get(serviceMethod).get(parameter).get(DESERIALIZE_CLIENT_METHOD_NAME)»
 								«IF conversionExpression === null»
 									«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
 										"Don't know how to server-deserialize «parameter.type.name» «parameter.simpleName»"
@@ -201,13 +202,13 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 							«serviceMethod.serviceMethodParameters.map[valueVariableName].join(", ")»,
 							new «resultParameter.type.toString»() {
 								@Override public void onSuccess(«resultParameterCallbackType.toString» «resultVar») {
-									«JsonElement.name» serializedResult;
+									«JSONValue.name» serializedResult;
 									«IF !resultParameter.type.primitive»
 										if («resultVar» == null) {
-											serializedResult = «JsonNull.name».INSTANCE;
+											serializedResult = «JSONNull.name».getInstance();
 										} else
 									«ENDIF»
-									«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(SERIALIZE_SERVER_METHOD_NAME)»
+									«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(SERIALIZE_CLIENT_METHOD_NAME)»
 									«IF conversionExpression === null»
 										«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
 											"Don't know how to server-serialize «resultParameter.type.name» «resultParameter.simpleName»"
@@ -232,33 +233,31 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 						addParameter(parameter.simpleName, parameter.type)
 					}
 					body = '''
-						«JSONArray.name» «arrayName» = new «JSONArray.name»();
-						«arrayName».set(0, new «JSONNumber.name»(«serviceMethodIndex»));
-						«var arrayIndex = 1»
+						«JsonArray.name» «arrayName» = new «JsonArray.name»();
+						«arrayName».add(new «JsonPrimitive.name»(«serviceMethodIndex»));
 						«FOR parameter : serviceMethod.serviceMethodParameters»
-							«val fieldIndex = arrayIndex++»
 							«IF !parameter.type.primitive»
 								if («parameter.simpleName» == null) {
-									«arrayName».set(«fieldIndex», «JSONNull.name».getInstance());
+									«arrayName».add(«JsonNull.name».INSTANCE);
 								} else
 							«ENDIF»
-							«val conversionExpression = parameterSerializationOperations.get(serviceMethod).get(parameter).get(SERIALIZE_CLIENT_METHOD_NAME)»
+							«val conversionExpression = parameterSerializationOperations.get(serviceMethod).get(parameter).get(SERIALIZE_SERVER_METHOD_NAME)»
 							«IF conversionExpression === null»
 								«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
 									"Don't know how to client-serialize «parameter.type.name» «parameter.simpleName»"
 								));
 							«ELSE»
-								«arrayName».set(«fieldIndex», «conversionExpression»);
+								«arrayName».add(«conversionExpression»);
 							«ENDIF»
 						«ENDFOR»
 						sendRequest(«arrayName»,
-							new «AsyncCallback.name»<«JSONValue.name»>() {
-								@Override public void onSuccess(«JSONValue.name» «resultVar») {
+							new «AsyncCallback.name»<«JsonElement.name»>() {
+								@Override public void onSuccess(«JsonElement.name» «resultVar») {
 									«resultParameterCallbackType.toString» deserializedResult;
-									if («resultVar» == null || «resultVar».isNull() != null) {
+									if («resultVar» == null || «resultVar».isJsonNull()) {
 										deserializedResult = null;
 									} else {
-										«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(DESERIALIZE_CLIENT_METHOD_NAME)»
+										«val conversionExpression = resultTypeSerializationOperations.get(serviceMethod).get(DESERIALIZE_SERVER_METHOD_NAME)»
 										«IF conversionExpression === null»
 											«Exceptions.name».sneakyThrow(new «IllegalArgumentException.name»(
 												"Don't know how to client-deserialize «resultParameterCallbackType.name» in «resultParameter.simpleName»"
@@ -301,7 +300,7 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 	}
 
 	def static String proxyName(ClassDeclaration it) {
-		packageName.replace(SERVER, CLIENT) + "." + interfaceSimpleName + "Proxy"
+		packageName.replace(CLIENT, SERVER) + "." + interfaceSimpleName + "Proxy"
 	}
 
 	def static interfaceName(ClassDeclaration it) {

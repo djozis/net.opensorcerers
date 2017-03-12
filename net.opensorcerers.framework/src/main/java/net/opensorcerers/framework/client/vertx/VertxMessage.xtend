@@ -7,7 +7,9 @@ import jsinterop.annotations.JsType
 class VertxMessage<T> {
 	@JsProperty public T body
 
-	def native <T> void reply(Object message, Object headers, VertxHandler<T> handler);
+	def native <T> void reply(Object message, Object headers, VertxHandler<T> handler)
 
-	def native <T> void reply(Object message);
+	def native <T> void reply(Object message)
+
+	def native <T> void fail(int failureCode, String message)
 }

@@ -28,6 +28,14 @@ class JsonSerializationServer {
 
 	def static deserializeString(JsonElement value) { return value.asString }
 
+	def static JsonElement serialize(Void value) {
+		throw new UnsupportedOperationException("This should never happen due to null checking")
+	}
+
+	def static Void deserializeVoid(JsonElement value) {
+		throw new UnsupportedOperationException("This should never happen due to null checking")
+	}
+
 	def static <T> serializeIterable(Iterable<T> values, (T)=>JsonElement mapper) {
 		val result = new JsonArray
 		for (value : values) {

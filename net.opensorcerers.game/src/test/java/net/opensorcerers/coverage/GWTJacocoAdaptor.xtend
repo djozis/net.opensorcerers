@@ -164,6 +164,11 @@ class GWTJacocoAdaptor {
 	 * Call this in runTest method of unit tests.
 	 */
 	def static setGwtCoveragePaths() {
+		if (javaToJavaDataMap.empty) {
+			throw new IllegalStateException(
+				'''Couldn't find Java source files. When executing tests in Eclipse, make sure to use GWT JUnit Test run configuration type.'''
+			)
+		}
 		System.setProperty(
 			CoverageInstrumentor.GWT_COVERAGE_SYSTEM_PROPERTY,
 			GWTJacocoAdaptor.javaToJavaDataMap.keySet.join(",")

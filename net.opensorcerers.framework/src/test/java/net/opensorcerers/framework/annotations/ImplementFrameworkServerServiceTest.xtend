@@ -51,8 +51,8 @@ class ImplementFrameworkServerServiceTest {
 			    } else
 			    message.set(1, net.opensorcerers.framework.client.JsonSerializationClient.serialize(x));
 			    sendRequest(message,
-			    	new com.google.gwt.user.client.rpc.AsyncCallback<com.google.gwt.json.client.JSONArray>() {
-			    		@Override public void onSuccess(com.google.gwt.json.client.JSONArray r) {
+			    	new com.google.gwt.user.client.rpc.AsyncCallback<com.google.gwt.json.client.JSONValue>() {
+			    		@Override public void onSuccess(com.google.gwt.json.client.JSONValue r) {
 			    			ArrayList<String> deserializedResult;
 			    			if (r == null || r.isNull() != null) {
 			    				deserializedResult = null;
@@ -80,18 +80,18 @@ class ImplementFrameworkServerServiceTest {
 			import com.google.gson.JsonElement;
 			import com.google.gwt.user.client.rpc.AsyncCallback;
 			import java.util.ArrayList;
-			import java.util.function.BiConsumer;
 			import net.opensorcerers.framework.annotations.ImplementFrameworkServerService;
 			import net.opensorcerers.framework.server.FrameworkServerServiceBase;
 			import net.opensorcerers.game.shared.TestClass;
 			import org.eclipse.xtext.xbase.lib.ObjectExtensions;
 			import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
+			import org.eclipse.xtext.xbase.lib.Procedures.Procedure3;
 			
 			@ImplementFrameworkServerService
 			@SuppressWarnings("all")
 			public class TestClassImpl extends FrameworkServerServiceBase implements TestClass {
-			  private class SayHello__Consumer implements BiConsumer<JsonArray, AsyncCallback<JsonElement>> {
-			    public void accept(final JsonArray message, final AsyncCallback<JsonElement> resultCallback) {
+			  private static class SayHello__Consumer implements Procedure3<TestClassImpl, JsonArray, AsyncCallback<JsonElement>> {
+			    public void apply(final TestClassImpl it, final JsonArray message, final AsyncCallback<JsonElement> resultCallback) {
 			      com.google.gson.JsonElement f;
 			      f = message.get(1);
 			      String x__value;
@@ -100,7 +100,7 @@ class ImplementFrameworkServerServiceTest {
 			      } else {
 			      	x__value = net.opensorcerers.framework.server.JsonSerializationServer.deserializeString(f);
 			      }
-			      sayHello(
+			      it.sayHello(
 			      	x__value,
 			      	new AsyncCallback<ArrayList<String>>() {
 			      		@Override public void onSuccess(ArrayList<String> r) {
@@ -138,12 +138,12 @@ class ImplementFrameworkServerServiceTest {
 			    return "testClass";
 			  }
 			  
-			  private final BiConsumer<JsonArray, AsyncCallback<JsonElement>>[] methodConsumers = new java.util.function.BiConsumer[] {
+			  private final static Procedure3<TestClassImpl, JsonArray, AsyncCallback<JsonElement>>[] methodConsumers = new org.eclipse.xtext.xbase.lib.Procedures.Procedure3[] {
 			    	new net.opensorcerers.game.server.TestClassImpl.SayHello__Consumer()
 			    };
 			  
 			  @Override
-			  protected BiConsumer<JsonArray, AsyncCallback<JsonElement>>[] getMethodConsumers() {
+			  protected Procedure3<TestClassImpl, JsonArray, AsyncCallback<JsonElement>>[] getMethodConsumers() {
 			    return methodConsumers;
 			  }
 			}

@@ -11,12 +11,17 @@ import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
 import com.google.gwt.user.client.rpc.AsyncCallback
 import java.util.ArrayList
+import com.google.gwt.user.client.Cookies
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	LoginWidget loginWidget
 
 	override onModuleLoad() {
 		ChainReaction.chain [
+			Console.log("Client Sesssion: " + Cookies.getCookie("JSESSIONID"))
+			RootPanel.get.add(new Paragraph => [
+				text = "Sesssion: " + Cookies.getCookie("JSESSIONID")
+			])
 			RootPanel.get.add(loginWidget = new LoginWidget [
 				RootPanel.get.add(new Label("SUCCESS"))
 			])
@@ -27,6 +32,7 @@ import java.util.ArrayList
 					])
 				]
 				eventBus.onConnectionOpened = [
+					new TestCServiceImpl().addToEventBus(eventBus)
 					RootPanel.get.add(new Paragraph => [
 						text = "Vertx event bus opened"
 					])
@@ -42,13 +48,22 @@ import java.util.ArrayList
 					]
 					new TestClassProxy(eventBus).sayHello("mystring", new AsyncCallback<ArrayList<String>> {
 						override onFailure(Throwable caught) {
-							RootPanel.get.add(new Paragraph => [text = caught.toString])
+							RootPanel.get.add(new Paragraph => [HTML = caught.toString.replace("\n","<br/>")])
 						}
 
 						override onSuccess(ArrayList<String> result) {
 							RootPanel.get.add(new Paragraph => [text = result.toString])
 						}
 					})
+					new TestClassProxy(eventBus).testSessionId(Cookies.getCookie("JSESSIONID"),
+						new AsyncCallback<Void> {
+							override onFailure(Throwable caught) {
+							RootPanel.get.add(new Paragraph => [HTML = caught.toString.replace("\n","<br/>")])
+							}
+
+							override onSuccess(Void result) {
+							}
+						})
 				]
 			]
 		]

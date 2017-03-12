@@ -11,6 +11,8 @@ public class VertxEventBus {
 
 	public native <T> void registerHandler(String address, VertxHandler<T> handler);
 
+	public native <T> void unregisterHandler(String address, VertxHandler<T> handler);
+
 	public native <T> void send(String address, Object message, Object headers, VertxHandler<T> callback);
 
 	@JsProperty(name = "onopen")
