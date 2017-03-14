@@ -1,9 +1,14 @@
 package net.opensorcerers.game.server
 
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import java.io.Closeable
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import javax.xml.ws.Holder
 import net.opensorcerers.database.bootstrap.DatabaseConnectivity
+import net.opensorcerers.game.server.bootstrap.SockJSEventBusVerticle
+import net.opensorcerers.game.server.services.TestClassImpl
 import org.eclipse.xtend.lib.annotations.Accessors
 
 /**
@@ -17,12 +22,28 @@ class ApplicationResources implements Closeable {
 
 	new(DatabaseConnectivity databaseConnectivity) {
 		this.databaseConnectivity = databaseConnectivity.open
-		this.vertx = Vertx.vertx => [
-			deployVerticle(new HelloWorldServiceVerticle) [
-				println("Deployed to Vertx: " + it.succeeded)
+		this.vertx = Vertx.vertx.deployVerticles(
+			new SockJSEventBusVerticle,
+			new TestClassImpl
+		)
+	}
+
+	def static deployVerticles(Vertx vertx, Verticle... verticles) {
+		val latch = new CountDownLatch(verticles.length)
+		val exceptionHolder = new Holder<Throwable>
+		for (verticle : verticles) {
+			vertx.deployVerticle(verticle) [
+				if (cause !== null && exceptionHolder.value !== null) {
+					exceptionHolder.value = cause
+				}
+				latch.countDown
 			]
-			deployVerticle(new TestClassImpl)
-		]
+		}
+		latch.await
+		if (exceptionHolder.value !== null) {
+			throw exceptionHolder.value
+		}
+		return vertx
 	}
 
 	override close() throws IOException {

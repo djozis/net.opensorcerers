@@ -22,7 +22,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestCreateAccount")
 		].andThen [
-			injectScripts("webjars/sockjs-client/1.1.2/sockjs.min.js")
+			injectScripts("webjars/sockjs-client/1.1.2/sockjs.js")
 		].andThen [
 			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [

@@ -3,8 +3,8 @@ package net.opensorcerers.game.client
 import com.google.gwt.core.client.GWT
 import com.google.gwt.user.client.ui.Composite
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
-import net.opensorcerers.game.shared.AuthenticationService
-import net.opensorcerers.game.shared.AuthenticationServiceAsync
+import net.opensorcerers.game.shared.services.AuthenticationService
+import net.opensorcerers.game.shared.services.AuthenticationServiceAsync
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.CheckBox
 import org.gwtbootstrap3.client.ui.FieldSet

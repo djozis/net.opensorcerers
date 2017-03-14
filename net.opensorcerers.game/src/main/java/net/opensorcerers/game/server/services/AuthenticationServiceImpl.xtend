@@ -1,4 +1,4 @@
-package net.opensorcerers.game.server
+package net.opensorcerers.game.server.services
 
 import de.itemis.xtend.auto.gwt.GwtService
 import java.util.Random
@@ -6,6 +6,7 @@ import javax.servlet.annotation.WebServlet
 import net.opensorcerers.database.entities.DBAuthenticationIdPassword
 import net.opensorcerers.database.entities.DBUser
 import net.opensorcerers.database.entities.DBUserSession
+import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.shared.ClientVisibleException
 import net.opensorcerers.game.shared.ResponseOrError
 

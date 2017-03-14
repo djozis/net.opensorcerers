@@ -92,6 +92,8 @@ dependencies {
         exclude group: "org.webjars.npm", module: "sockjs-client"
     }
     compile 'io.vertx:vertx-web:3.4.0'
+    compile 'io.vertx:vertx-mongo-client:3.4.0'
+    testCompile group: "de.flapdoodle.embed", name: "de.flapdoodle.embed.mongo", version: "2.0.0"
 }
 
 apply plugin: 'jacoco'

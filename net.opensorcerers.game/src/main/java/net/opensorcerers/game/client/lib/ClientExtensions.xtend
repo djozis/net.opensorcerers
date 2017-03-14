@@ -1,12 +1,16 @@
 package net.opensorcerers.game.client.lib
 
+import com.google.gwt.core.client.JavaScriptObject
 import com.google.gwt.user.client.ui.Panel
 import com.google.gwt.user.client.ui.Widget
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import java.util.Map
 import net.opensorcerers.game.client.lib.ClientExtensions.LabelForChainer
 import org.gwtbootstrap3.client.ui.FormLabel
 import org.gwtbootstrap3.client.ui.base.HasId
 
-class ClientExtensions {
+class ClientExtensions extends JavaClientExtensions {
 	static var idIncrement = 0
 
 	def static generateId() { return "i" + (idIncrement++) }
@@ -33,5 +37,19 @@ class ClientExtensions {
 				return toAdd
 			}
 		}
+	}
+
+	def static getStacktrace(Throwable e) {
+		return (new ByteArrayOutputStream => [
+			e.printStackTrace(new PrintStream(it))
+		]).toString
+	}
+
+	def static JavaScriptObject toJSO(Map<String, ?> map) {
+		val result = JavaScriptObject.createObject
+		for (entry : (map as Map<String, Object>).entrySet) {
+			result.setField(entry.key, entry.value)
+		}
+		return result
 	}
 }

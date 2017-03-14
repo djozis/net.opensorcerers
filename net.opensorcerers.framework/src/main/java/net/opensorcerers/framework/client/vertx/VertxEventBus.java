@@ -1,5 +1,7 @@
 package net.opensorcerers.framework.client.vertx;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -19,4 +21,7 @@ public class VertxEventBus {
 	public VertxSimpleCallback onConnectionOpened;
 	@JsProperty(name = "onclose")
 	public VertxSimpleCallback onConnectionClosed;
+
+	@JsProperty
+	public JavaScriptObject defaultHeaders;
 }

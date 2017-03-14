@@ -1,70 +1,59 @@
 package net.opensorcerers.game.client
 
 import com.google.gwt.core.client.EntryPoint
+import com.google.gwt.user.client.Cookies
+import com.google.gwt.user.client.Window
+import com.google.gwt.user.client.rpc.AsyncCallback
 import com.google.gwt.user.client.ui.RootPanel
 import net.opensorcerers.framework.client.vertx.VertxEventBus
-import net.opensorcerers.game.client.lib.Console
+import net.opensorcerers.framework.shared.HeaderConstants
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
-import net.opensorcerers.game.shared.TestPOJO
+import net.opensorcerers.game.client.services.TestClassProxy
+import net.opensorcerers.game.shared.EventBusConstants
+import net.opensorcerers.game.shared.ResponseOrError
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
-import com.google.gwt.user.client.rpc.AsyncCallback
-import java.util.ArrayList
-import com.google.gwt.user.client.Cookies
+
+import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
+	VertxEventBus eventBus
 	LoginWidget loginWidget
+
+	def getSessionId() { Cookies.getCookie("JSESSIONID") }
 
 	override onModuleLoad() {
 		ChainReaction.chain [
-			Console.log("Client Sesssion: " + Cookies.getCookie("JSESSIONID"))
-			RootPanel.get.add(new Paragraph => [
-				text = "Sesssion: " + Cookies.getCookie("JSESSIONID")
-			])
-			RootPanel.get.add(loginWidget = new LoginWidget [
-				RootPanel.get.add(new Label("SUCCESS"))
-			])
-			new VertxEventBus("http://localhost:17632/world", new Object) => [ eventBus |
-				eventBus.onConnectionClosed = [
-					RootPanel.get.add(new Paragraph => [
-						text = "Vertx event bus closed"
-					])
-				]
-				eventBus.onConnectionOpened = [
-					new TestCServiceImpl().addToEventBus(eventBus)
-					RootPanel.get.add(new Paragraph => [
-						text = "Vertx event bus opened"
-					])
-					eventBus.<TestPOJO>registerHandler("world") [ error, message |
-						Console.log("World handler:")
-						Console.log(message.body)
-						RootPanel.get.add(new Paragraph => [text = message.body.toString])
-						message.reply("I heard you on world")
-					]
-					eventBus.<String>send("greet", "Client says hi", null) [ error, message |
-						Console.log("Greet response:")
-						Console.log(message)
-					]
-					new TestClassProxy(eventBus).sayHello("mystring", new AsyncCallback<ArrayList<String>> {
-						override onFailure(Throwable caught) {
-							RootPanel.get.add(new Paragraph => [HTML = caught.toString.replace("\n","<br/>")])
-						}
+			val connectingElement = new Paragraph(
+				"Connecting... if this takes more than a few seconds, there is probably a server error."
+			)
+			RootPanel.get.add(connectingElement)
+			eventBus = new VertxEventBus(
+				"http://" + Window.Location.hostName + ":" + EventBusConstants.port + EventBusConstants.path,
+				new Object
+			)
+			eventBus.defaultHeaders = #{
+				HeaderConstants.sessionId -> Cookies.getCookie("JSESSIONID")
+			}.toJSO
+			eventBus.onConnectionClosed = [
+				RootPanel.get.add(new Paragraph => [text = "Event bus closed"])
+			]
+			val chainHolder = ifSuccessful[RootPanel.get.remove(connectingElement)]
+			eventBus.onConnectionOpened = [chainHolder.onSuccess(new ResponseOrError)]
+			ChainReaction.chain [ // TODO: fix this - this shouldn't need to nest.
+				RootPanel.get.add(loginWidget = new LoginWidget [
+					RootPanel.get.add(new Label("SUCCESS"))
+				])
+				new TestClassProxy(eventBus).sayHello(sessionId, new AsyncCallback<String> {
+					override onFailure(Throwable caught) {
+						RootPanel.get.add(new Paragraph("Error: " + caught.stacktrace))
+					}
 
-						override onSuccess(ArrayList<String> result) {
-							RootPanel.get.add(new Paragraph => [text = result.toString])
-						}
-					})
-					new TestClassProxy(eventBus).testSessionId(Cookies.getCookie("JSESSIONID"),
-						new AsyncCallback<Void> {
-							override onFailure(Throwable caught) {
-							RootPanel.get.add(new Paragraph => [HTML = caught.toString.replace("\n","<br/>")])
-							}
-
-							override onSuccess(Void result) {
-							}
-						})
-				]
+					override onSuccess(String result) {
+						RootPanel.get.add(new Paragraph(result))
+					}
+				})
 			]
 		]
 	}
