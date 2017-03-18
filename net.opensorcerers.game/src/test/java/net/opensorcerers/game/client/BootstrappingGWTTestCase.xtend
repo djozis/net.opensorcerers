@@ -11,7 +11,6 @@ import java.util.ArrayList
 import java.util.logging.Logger
 import javax.servlet.annotation.WebServlet
 import net.opensorcerers.coverage.GWTJacocoAdaptor
-import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
 import net.opensorcerers.game.client.lib.chainreaction.ChainLinkAPI
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
@@ -25,11 +24,12 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 
 import static net.opensorcerers.game.server.ApplicationResources.*
+import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
 
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	@Accessors val logger = Logger.getLogger(class.simpleName)
 
-	@GwtIncompatible protected static val databaseConnectivity = new H2DatabaseConnectivity
+	@GwtIncompatible protected static val databaseConnectivity = new TestDatabaseConnectivity
 
 	@GwtIncompatible boolean needServerInitialization = true
 

@@ -6,10 +6,10 @@ import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import javax.xml.ws.Holder
-import net.opensorcerers.database.bootstrap.DatabaseConnectivity
 import net.opensorcerers.game.server.bootstrap.SockJSEventBusVerticle
 import net.opensorcerers.game.server.services.TestClassImpl
 import org.eclipse.xtend.lib.annotations.Accessors
+import net.opensorcerers.game.server.mongo.DatabaseConnectivity
 
 /**
  * Static fields can be overridden in unit testing.

@@ -11,8 +11,8 @@ dependencies {
     testCompile 'io.vertx:vertx-web:3.4.0'
     compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
     testCompile 'javax.servlet:javax.servlet-api:3.0.1'
-    compileOnly 'io.vertx:vertx-mongo-client:3.4.0'
-    testCompile 'io.vertx:vertx-mongo-client:3.4.0'
+    compileOnly 'org.mongodb:mongodb-driver-async:3.0.4'
+    testCompile 'org.mongodb:mongodb-driver-async:3.0.4'
     
     testCompile group: 'org.eclipse.xtend', name: 'org.eclipse.xtend.core', version: xtextVersion
     testCompile group: 'org.eclipse.xtext', name: 'org.eclipse.xtext.xbase.testing', version: xtextVersion

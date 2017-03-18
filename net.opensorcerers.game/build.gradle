@@ -67,18 +67,16 @@ dependencies {
 	compile "org.webjars:jquery:2.2.4"
 	compile "org.webjars:ace:1.2.3"
     
-    // Database
-    compile 'mysql:mysql-connector-java:6.0.4'
-    compile 'commons-dbcp:commons-dbcp:1.4'
-    compile 'org.hibernate:hibernate-core:5.2.3.Final'
-    compile 'com.h2database:h2:1.4.192'
-    
     // General
     compile 'org.reflections:reflections:0.9.10'
     gwt project(':net.opensorcerers.framework')
     gwt project (path: ":net.opensorcerers.framework", configuration: 'sourcesArtifacts')
     compile project(':net.opensorcerers.framework')
 	compile project(':net.opensorcerers.framework')
+    gwt project(':net.opensorcerers.mongoframework')
+    gwt project (path: ":net.opensorcerers.mongoframework", configuration: 'sourcesArtifacts')
+    compile project(':net.opensorcerers.mongoframework')
+	compile project(':net.opensorcerers.mongoframework')
     testCompile 'junit:junit:4.12'
     testCompile 'org.seleniumhq.selenium:selenium-htmlunit-driver:2.52.0'
 	testCompile "org.eclipse.jetty:jetty-annotations:9.3.8.v20160314"
@@ -92,8 +90,10 @@ dependencies {
         exclude group: "org.webjars.npm", module: "sockjs-client"
     }
     compile 'io.vertx:vertx-web:3.4.0'
-    compile 'io.vertx:vertx-mongo-client:3.4.0'
-    testCompile group: "de.flapdoodle.embed", name: "de.flapdoodle.embed.mongo", version: "2.0.0"
+    
+    // Mongo
+    compile 'org.mongodb:mongodb-driver-async:3.0.4'
+    compile group: "de.flapdoodle.embed", name: "de.flapdoodle.embed.mongo", version: "2.0.0"
 }
 
 apply plugin: 'jacoco'
