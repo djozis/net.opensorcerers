@@ -1,10 +1,10 @@
 package net.opensorcerers.mongoframework.lib
 
 import net.opensorcerers.mongoframework.lib.filter.FilterExpression
-import net.opensorcerers.mongoframework.lib.filter.FilterExpressionEncoder
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
+import net.opensorcerers.mongoframework.lib.filter.FilterExpressionCodec
 
 class MongoBeanCodecProvider implements CodecProvider {
 	override <T> get(Class<T> clazz, CodecRegistry registry) {
@@ -13,7 +13,7 @@ class MongoBeanCodecProvider implements CodecProvider {
 		}
 
 		if (clazz == FilterExpression) {
-			return new FilterExpressionEncoder(registry) as Codec<T>
+			return new FilterExpressionCodec(registry) as Codec<T>
 		}
 
 		return null

@@ -60,6 +60,10 @@ class MyMain {
 		println(sync[collection.find.first(it)]._id)
 		println((sync[collection.find.first(it)].another as MyBeanMixin).mixedInString)
 		println("OK")
-		println(sync[collection.find(MyBean.filter[another.mixedInString == "mixed in!"]).first(it)]._id)
+		println(sync[
+			collection.find(MyBean.filter [
+				another.mixedInString.exists && another.mixedInString == "mixed in!" && another.zzz == "Another value"
+			]).first(it)
+		]._id)
 	}
 }

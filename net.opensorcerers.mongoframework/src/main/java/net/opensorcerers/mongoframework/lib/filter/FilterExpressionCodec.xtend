@@ -1,5 +1,6 @@
 package net.opensorcerers.mongoframework.lib.filter
 
+import java.util.ArrayList
 import org.bson.BsonReader
 import org.bson.BsonWriter
 import org.bson.codecs.Codec
@@ -10,7 +11,7 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 import static extension org.bson.codecs.BsonValueCodecProvider.*
 
-@FinalFieldsConstructor class FilterExpressionEncoder implements Codec<FilterExpression> {
+@FinalFieldsConstructor class FilterExpressionCodec implements Codec<FilterExpression> {
 	val CodecRegistry codecRegistry
 
 	override getEncoderClass() { return FilterExpression }
@@ -19,11 +20,24 @@ import static extension org.bson.codecs.BsonValueCodecProvider.*
 		writer.writeStartDocument
 
 		writer.writeName(value.key)
-		encoderContext.encodeWithChildContext(
-			codecRegistry.get(value.value.class) as Codec<Object>,
-			writer,
-			value.value
-		)
+		val expressionValue = value.value
+		if (expressionValue instanceof ArrayList<?>) {
+			writer.writeStartArray
+			for (listedExpression : expressionValue as ArrayList<FilterExpression>) {
+				encoderContext.encodeWithChildContext(
+					this,
+					writer,
+					listedExpression
+				)
+			}
+			writer.writeEndArray
+		} else {
+			encoderContext.encodeWithChildContext(
+				codecRegistry.get(expressionValue.class) as Codec<Object>,
+				writer,
+				expressionValue
+			)
+		}
 
 		writer.writeEndDocument
 	}
