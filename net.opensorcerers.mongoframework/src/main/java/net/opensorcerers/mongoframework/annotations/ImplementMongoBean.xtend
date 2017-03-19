@@ -6,15 +6,22 @@ import java.lang.annotation.Target
 import java.util.HashMap
 import java.util.LinkedHashMap
 import net.opensorcerers.mongoframework.lib.MongoBean
+import net.opensorcerers.mongoframework.lib.filter.FilterBeanField
+import net.opensorcerers.mongoframework.lib.filter.FilterExpression
+import net.opensorcerers.mongoframework.lib.filter.FilterField
+import net.opensorcerers.mongoframework.lib.filter.FilterNumberField
 import org.eclipse.xtend.lib.macro.AbstractClassProcessor
 import org.eclipse.xtend.lib.macro.Active
+import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
 import org.eclipse.xtend.lib.macro.TransformationContext
 import org.eclipse.xtend.lib.macro.declaration.AnnotationTarget
+import org.eclipse.xtend.lib.macro.declaration.ClassDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableClassDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableFieldDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableMethodDeclaration
 import org.eclipse.xtend.lib.macro.declaration.TypeReference
 import org.eclipse.xtend.lib.macro.declaration.Visibility
+import org.eclipse.xtext.xbase.lib.Functions.Function1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure2
 
 @Target(ElementType.TYPE)
@@ -24,6 +31,18 @@ annotation ImplementMongoBean {
 }
 
 class ImplementMongoBeanProcessor extends AbstractClassProcessor {
+	def static String getFilterFieldClassName(ClassDeclaration declaration) {
+		return declaration.qualifiedName.filterFieldClassName
+	}
+
+	def static String getFilterFieldClassName(String qualifiedName) {
+		return qualifiedName + ".FilterField"
+	}
+
+	override doRegisterGlobals(ClassDeclaration annotatedClass, extension RegisterGlobalsContext context) {
+		context.registerClass(annotatedClass.filterFieldClassName)
+	}
+
 	override doTransform(MutableClassDeclaration it, extension TransformationContext transformationContext) {
 		if (extendedClass == Object.newTypeReference) {
 			extendedClass = MongoBean.newTypeReference
@@ -138,5 +157,57 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 				«ENDFOR»
 			'''
 		]
+
+		val filterFieldClass = findClass(filterFieldClassName)
+		filterFieldClass.primarySourceElement = transformingClass.primarySourceElement
+		filterFieldClass.extendedClass = FilterBeanField.newTypeReference
+		filterFieldClass.addConstructor [
+			addParameter("fieldName", String.newTypeReference)
+			visibility = Visibility.PUBLIC
+			body = '''
+				super(fieldName);
+			'''
+		]
+		for (field : declaredFields) {
+			filterFieldClass.addMethod("get" + field.simpleName.toFirstUpper) [
+				primarySourceElement = field.primarySourceElement
+				visibility = Visibility.PUBLIC
+				returnType = transformationContext.getFilterFieldType(field.type)
+				body = '''
+					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
+						return new «returnType.toString»("«field.simpleName»");
+					} else {
+						return new «returnType.toString»(this.getFieldName() + "." + "«field.simpleName»");
+					}
+				'''
+			]
+		}
+
+		addMethod("filter") [
+			visibility = Visibility.PUBLIC
+			static = true
+			returnType = FilterExpression.newTypeReference
+			addParameter(
+				"configurationCallback",
+				Function1.newTypeReference(
+					filterFieldClass.newTypeReference,
+					FilterExpression.newTypeReference
+				)
+			)
+			body = '''
+				return configurationCallback.apply(new «filterFieldClass.newTypeReference.toString»(null));
+			'''
+		]
+	}
+
+	def static TypeReference getFilterFieldType(extension TransformationContext context, TypeReference typeReference) {
+		switch (typeReference) {
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference):
+				findClass(typeReference.name.filterFieldClassName).newTypeReference
+			case Number.newTypeReference.isAssignableFrom(typeReference):
+				FilterNumberField.newTypeReference
+			default:
+				FilterField.newTypeReference
+		}
 	}
 }

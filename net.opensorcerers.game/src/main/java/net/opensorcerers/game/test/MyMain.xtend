@@ -47,16 +47,19 @@ class MyMain {
 
 	def static runTest(MongoDatabase database) {
 		val collection = database.getCollection("col", MyBean)
-		sync[collection.insertOne(new MyBean =>[
-			zzz = "TESTvalue"
-			another = new MyBean => [
-				zzz = "Another value"
-				mixedInString = "mixed in!"
-			]
-		], it)]
+		sync[
+			collection.insertOne(new MyBean => [
+				zzz = "TESTvalue"
+				another = new MyBean => [
+					zzz = "Another value"
+					mixedInString = "mixed in!"
+				]
+			], it)
+		]
 		println(sync[collection.find.first(it)].zzz)
 		println(sync[collection.find.first(it)]._id)
 		println((sync[collection.find.first(it)].another as MyBeanMixin).mixedInString)
 		println("OK")
+		println(sync[collection.find(MyBean.filter[another.mixedInString == "mixed in!"]).first(it)]._id)
 	}
 }

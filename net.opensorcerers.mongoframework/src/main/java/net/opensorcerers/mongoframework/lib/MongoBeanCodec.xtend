@@ -7,7 +7,6 @@ import org.bson.BsonObjectId
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonWriter
-import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.Codec
 import org.bson.codecs.CollectibleCodec
 import org.bson.codecs.DecoderContext
@@ -58,7 +57,7 @@ class MongoBeanCodec<T extends MongoBean> implements CollectibleCodec<T> {
 
 	var needsInit = true
 
-	def checkInit() {
+	protected def checkInit() {
 		if (needsInit) {
 			val fieldsMap = new HashMap<String, Field>().addBeanClassFieldsToMap(encoderClass)
 			for (fieldMetadataEntry : fieldMetadataLookup.entrySet) {
@@ -111,11 +110,6 @@ class MongoBeanCodec<T extends MongoBean> implements CollectibleCodec<T> {
 
 		reader.readEndDocument
 		return result
-	}
-
-	def Object readValue(BsonReader reader, DecoderContext decoderContext) {
-		return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader,
-			decoderContext);
 	}
 
 	override documentHasId(T document) { return document._id !== null }
