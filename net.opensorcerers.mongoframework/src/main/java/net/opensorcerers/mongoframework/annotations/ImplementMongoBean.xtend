@@ -10,6 +10,10 @@ import net.opensorcerers.mongoframework.lib.filter.FilterBeanField
 import net.opensorcerers.mongoframework.lib.filter.FilterExpression
 import net.opensorcerers.mongoframework.lib.filter.FilterField
 import net.opensorcerers.mongoframework.lib.filter.FilterNumberField
+import net.opensorcerers.mongoframework.lib.update.UpdateBeanField
+import net.opensorcerers.mongoframework.lib.update.UpdateField
+import net.opensorcerers.mongoframework.lib.update.UpdateNumberField
+import net.opensorcerers.mongoframework.lib.update.UpdateStatementList
 import org.eclipse.xtend.lib.macro.AbstractClassProcessor
 import org.eclipse.xtend.lib.macro.Active
 import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
@@ -22,6 +26,7 @@ import org.eclipse.xtend.lib.macro.declaration.MutableMethodDeclaration
 import org.eclipse.xtend.lib.macro.declaration.TypeReference
 import org.eclipse.xtend.lib.macro.declaration.Visibility
 import org.eclipse.xtext.xbase.lib.Functions.Function1
+import org.eclipse.xtext.xbase.lib.Procedures.Procedure1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure2
 
 @Target(ElementType.TYPE)
@@ -39,8 +44,17 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 		return qualifiedName + ".FilterField"
 	}
 
+	def static String getUpdateFieldClassName(ClassDeclaration declaration) {
+		return declaration.qualifiedName.updateFieldClassName
+	}
+
+	def static String getUpdateFieldClassName(String qualifiedName) {
+		return qualifiedName + ".UpdateField"
+	}
+
 	override doRegisterGlobals(ClassDeclaration annotatedClass, extension RegisterGlobalsContext context) {
 		context.registerClass(annotatedClass.filterFieldClassName)
+		context.registerClass(annotatedClass.updateFieldClassName)
 	}
 
 	override doTransform(MutableClassDeclaration it, extension TransformationContext transformationContext) {
@@ -162,8 +176,9 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 		filterFieldClass.primarySourceElement = transformingClass.primarySourceElement
 		filterFieldClass.extendedClass = FilterBeanField.newTypeReference
 		filterFieldClass.addConstructor [
-			addParameter("fieldName", String.newTypeReference)
+			primarySourceElement = transformingClass.primarySourceElement
 			visibility = Visibility.PUBLIC
+			addParameter("fieldName", String.newTypeReference)
 			body = '''
 				super(fieldName);
 			'''
@@ -177,13 +192,13 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
 						return new «returnType.toString»("«field.simpleName»");
 					} else {
-						return new «returnType.toString»(this.getFieldName() + "." + "«field.simpleName»");
+						return new «returnType.toString»(this.getFieldName() + ".«field.simpleName»");
 					}
 				'''
 			]
 		}
-
 		addMethod("filter") [
+			primarySourceElement = transformingClass.primarySourceElement
 			visibility = Visibility.PUBLIC
 			static = true
 			returnType = FilterExpression.newTypeReference
@@ -198,6 +213,59 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 				return configurationCallback.apply(new «filterFieldClass.newTypeReference.toString»(null));
 			'''
 		]
+
+		val updateFieldClass = findClass(updateFieldClassName)
+		updateFieldClass.primarySourceElement = transformingClass.primarySourceElement
+		updateFieldClass.extendedClass = UpdateBeanField.newTypeReference
+		updateFieldClass.addConstructor [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			addParameter("updateStatementList", UpdateStatementList.newTypeReference)
+			addParameter("fieldName", String.newTypeReference)
+			body = '''
+				super(updateStatementList, fieldName);
+			'''
+		]
+		for (field : declaredFields) {
+			updateFieldClass.addMethod("get" + field.simpleName.toFirstUpper) [
+				primarySourceElement = field.primarySourceElement
+				visibility = Visibility.PUBLIC
+				returnType = transformationContext.getUpdateFieldType(field.type)
+				body = '''
+					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
+						return new «returnType.toString»(this.getUpdateStatementList(), "«field.simpleName»");
+					} else {
+						return new «returnType.toString»(this.getUpdateStatementList(), this.getFieldName() + ".«field.simpleName»");
+					}
+				'''
+			]
+			updateFieldClass.addMethod("set" + field.simpleName.toFirstUpper) [
+				primarySourceElement = field.primarySourceElement
+				visibility = Visibility.PUBLIC
+				returnType = void.newTypeReference
+				addParameter(field.simpleName, field.type)
+				body = '''
+					this.get«field.simpleName.toFirstUpper»().set(«field.simpleName»);
+				'''
+			]
+		}
+		addMethod("update") [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			static = true
+			returnType = UpdateStatementList.newTypeReference
+			addParameter(
+				"configurationCallback",
+				Procedure1.newTypeReference(
+					updateFieldClass.newTypeReference
+				)
+			)
+			body = '''
+				final «UpdateStatementList.name» updates = new «UpdateStatementList.name»();
+				configurationCallback.apply(new «updateFieldClass.newTypeReference.toString»(updates, null));
+				return updates;
+			'''
+		]
 	}
 
 	def static TypeReference getFilterFieldType(extension TransformationContext context, TypeReference typeReference) {
@@ -208,6 +276,17 @@ class ImplementMongoBeanProcessor extends AbstractClassProcessor {
 				FilterNumberField.newTypeReference
 			default:
 				FilterField.newTypeReference
+		}
+	}
+
+	def static TypeReference getUpdateFieldType(extension TransformationContext context, TypeReference typeReference) {
+		switch (typeReference) {
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference):
+				findClass(typeReference.name.updateFieldClassName).newTypeReference
+			case Number.newTypeReference.isAssignableFrom(typeReference):
+				UpdateNumberField.newTypeReference
+			default:
+				UpdateField.newTypeReference
 		}
 	}
 }

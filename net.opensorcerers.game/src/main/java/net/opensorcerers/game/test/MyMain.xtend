@@ -65,5 +65,11 @@ class MyMain {
 				another.mixedInString.exists && another.mixedInString == "mixed in!" && another.zzz == "Another value"
 			]).first(it)
 		]._id)
+		sync[collection.updateOne(MyBean.filter[zzz == "TESTvalue"], MyBean.update[
+			zzz.unset
+			another.zzz = "Another!"
+		], it)]
+		println(sync[collection.find.first(it)].zzz)
+		println(sync[collection.find.first(it)].another.zzz)
 	}
 }

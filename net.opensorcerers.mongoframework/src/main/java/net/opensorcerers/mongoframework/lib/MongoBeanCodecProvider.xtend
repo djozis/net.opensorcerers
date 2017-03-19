@@ -1,10 +1,14 @@
 package net.opensorcerers.mongoframework.lib
 
 import net.opensorcerers.mongoframework.lib.filter.FilterExpression
+import net.opensorcerers.mongoframework.lib.filter.FilterExpressionCodec
+import net.opensorcerers.mongoframework.lib.update.UpdateStatement
+import net.opensorcerers.mongoframework.lib.update.UpdateStatementCodec
+import net.opensorcerers.mongoframework.lib.update.UpdateStatementList
+import net.opensorcerers.mongoframework.lib.update.UpdateStatementListCodec
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
-import net.opensorcerers.mongoframework.lib.filter.FilterExpressionCodec
 
 class MongoBeanCodecProvider implements CodecProvider {
 	override <T> get(Class<T> clazz, CodecRegistry registry) {
@@ -12,8 +16,10 @@ class MongoBeanCodecProvider implements CodecProvider {
 			return new MongoBeanCodec(registry, clazz as Class<?>)
 		}
 
-		if (clazz == FilterExpression) {
-			return new FilterExpressionCodec(registry) as Codec<T>
+		switch (clazz) {
+			case FilterExpression: return new FilterExpressionCodec(registry) as Codec<T>
+			case UpdateStatement: return new UpdateStatementCodec(registry) as Codec<T>
+			case UpdateStatementList: return new UpdateStatementListCodec(registry) as Codec<T>
 		}
 
 		return null
