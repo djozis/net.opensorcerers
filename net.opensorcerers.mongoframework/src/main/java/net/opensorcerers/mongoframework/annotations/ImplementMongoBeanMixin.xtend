@@ -4,9 +4,13 @@ import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.Target
 import java.util.List
+import net.opensorcerers.mongoframework.annotations.lib.MongoBeanImplementationHelper
 import org.eclipse.xtend.lib.macro.Active
+import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
+import org.eclipse.xtend.lib.macro.RegisterGlobalsParticipant
 import org.eclipse.xtend.lib.macro.TransformationContext
 import org.eclipse.xtend.lib.macro.TransformationParticipant
+import org.eclipse.xtend.lib.macro.declaration.InterfaceDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableInterfaceDeclaration
 
 @Target(ElementType.TYPE)
@@ -15,8 +19,14 @@ import org.eclipse.xtend.lib.macro.declaration.MutableInterfaceDeclaration
 annotation ImplementMongoBeanMixin {
 }
 
-class ImplementMongoBeanMixinProcessor implements TransformationParticipant<MutableInterfaceDeclaration> {
-	def doTransform(MutableInterfaceDeclaration it, extension TransformationContext context) {
+class ImplementMongoBeanMixinProcessor implements TransformationParticipant<MutableInterfaceDeclaration>, RegisterGlobalsParticipant<InterfaceDeclaration> {
+	def void doRegisterGlobals(InterfaceDeclaration it, RegisterGlobalsContext context) {
+		MongoBeanImplementationHelper.doRegisterGlobals(it, context)
+	}
+
+	def doTransform(MutableInterfaceDeclaration it, extension TransformationContext transformationContext) {
+		MongoBeanImplementationHelper.doTransform(it, transformationContext)
+
 		for (field : declaredFields) {
 			addMethod('''get«field.simpleName.toFirstUpper»''') [
 				visibility = field.visibility
@@ -37,6 +47,13 @@ class ImplementMongoBeanMixinProcessor implements TransformationParticipant<Muta
 	) {
 		for (target : annotatedTargetElements) {
 			target.doTransform(context)
+		}
+	}
+
+	override doRegisterGlobals(List<? extends InterfaceDeclaration> annotatedSourceElements,
+		extension RegisterGlobalsContext context) {
+		for (annotatedSourceElement : annotatedSourceElements) {
+			doRegisterGlobals(annotatedSourceElement, context)
 		}
 	}
 }

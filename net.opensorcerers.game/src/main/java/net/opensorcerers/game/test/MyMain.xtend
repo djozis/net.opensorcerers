@@ -54,6 +54,7 @@ class MyMain {
 					zzz = "Another value"
 					mixedInString = "mixed in!"
 				]
+				mixedInString = "donkey"
 			], it)
 		]
 		println(sync[collection.find.first(it)].zzz)
@@ -61,15 +62,23 @@ class MyMain {
 		println((sync[collection.find.first(it)].another as MyBeanMixin).mixedInString)
 		println("OK")
 		println(sync[
-			collection.find(MyBean.filter [
+			collection.find(MyBean.Utils.filter [
 				another.mixedInString.exists && another.mixedInString == "mixed in!" && another.zzz == "Another value"
 			]).first(it)
 		]._id)
-		sync[collection.updateOne(MyBean.filter[zzz == "TESTvalue"], MyBean.update[
-			zzz.unset
-			another.zzz = "Another!"
-		], it)]
+		sync[
+			collection.updateOne(MyBean.Utils.filter[zzz == "TESTvalue"], MyBean.Utils.update [
+				zzz.unset
+				another.zzz = "Another!"
+			], it)
+		]
 		println(sync[collection.find.first(it)].zzz)
 		println(sync[collection.find.first(it)].another.zzz)
+		sync[
+			collection.updateOne(MyBeanMixin.Utils.filter[mixedInString == "donkey"], MyBeanMixin.Utils.update [
+				mixedInString = "mixxy"
+			], it)
+		]
+		println(sync[collection.find.first(it)].mixedInString)
 	}
 }
