@@ -2,19 +2,21 @@ package net.opensorcerers.mongoframework.annotations.lib
 
 import java.util.HashMap
 import java.util.LinkedHashMap
-import net.opensorcerers.mongoframework.annotations.ImplementMongoBeanMixin
 import net.opensorcerers.mongoframework.lib.MongoBean
+import net.opensorcerers.mongoframework.lib.MongoBeanMixin
 import net.opensorcerers.mongoframework.lib.filter.FilterBeanField
 import net.opensorcerers.mongoframework.lib.filter.FilterExpression
 import net.opensorcerers.mongoframework.lib.filter.FilterField
 import net.opensorcerers.mongoframework.lib.filter.FilterNumberField
+import net.opensorcerers.mongoframework.lib.project.ProjectBeanField
+import net.opensorcerers.mongoframework.lib.project.ProjectField
+import net.opensorcerers.mongoframework.lib.project.ProjectStatementList
 import net.opensorcerers.mongoframework.lib.update.UpdateBeanField
 import net.opensorcerers.mongoframework.lib.update.UpdateField
 import net.opensorcerers.mongoframework.lib.update.UpdateNumberField
 import net.opensorcerers.mongoframework.lib.update.UpdateStatementList
 import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
 import org.eclipse.xtend.lib.macro.TransformationContext
-import org.eclipse.xtend.lib.macro.declaration.AnnotationTarget
 import org.eclipse.xtend.lib.macro.declaration.MutableClassDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableFieldDeclaration
 import org.eclipse.xtend.lib.macro.declaration.MutableInterfaceDeclaration
@@ -52,10 +54,19 @@ class MongoBeanImplementationHelper {
 		return qualifiedName + ".UpdateField"
 	}
 
+	def static String getProjectFieldClassName(TypeDeclaration declaration) {
+		return declaration.qualifiedName.projectFieldClassName
+	}
+
+	def static String getProjectFieldClassName(String qualifiedName) {
+		return qualifiedName + ".ProjectField"
+	}
+
 	def static doRegisterGlobals(TypeDeclaration annotatedClass, extension RegisterGlobalsContext context) {
 		context.registerClass(annotatedClass.utilsClassName)
 		context.registerClass(annotatedClass.filterFieldClassName)
 		context.registerClass(annotatedClass.updateFieldClassName)
+		context.registerClass(annotatedClass.projectFieldClassName)
 	}
 
 	def static doTransform(MutableTypeDeclaration it, extension TransformationContext transformationContext) {
@@ -70,9 +81,8 @@ class MongoBeanImplementationHelper {
 			allMethods.put(method.simpleName, method)
 		}
 
-		for (interface : implementedInterfaces.filter [
-			type instanceof AnnotationTarget &&
-				(type as AnnotationTarget).findAnnotation(ImplementMongoBeanMixin.findTypeGlobally) !== null
+		for (interface : appliedInterfaces.filter [
+			MongoBeanMixin.newTypeReference.isAssignableFrom(it)
 		]) {
 			for (interfaceMethod : interface.declaredResolvedMethods.filter[!declaration.static]) {
 				val methodName = interfaceMethod.declaration.simpleName
@@ -266,11 +276,58 @@ class MongoBeanImplementationHelper {
 				return updates;
 			'''
 		]
+
+		val projectFieldClass = findClass(projectFieldClassName)
+		projectFieldClass.primarySourceElement = transformingClass.primarySourceElement
+		projectFieldClass.extendedClass = ProjectBeanField.newTypeReference
+		projectFieldClass.addConstructor [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			addParameter("projectStatementList", ProjectStatementList.newTypeReference)
+			addParameter("fieldName", String.newTypeReference)
+			body = '''
+				super(projectStatementList, fieldName);
+			'''
+		]
+		for (field : declaredFields) {
+			projectFieldClass.addMethod("get" + field.simpleName.toFirstUpper) [
+				primarySourceElement = field.primarySourceElement
+				addAnnotation(Pure.newAnnotationReference)
+				visibility = Visibility.PUBLIC
+				returnType = transformationContext.getProjectFieldType(field.type)
+				body = '''
+					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
+						return new «returnType.toString»(this.getProjectStatementList(), "«field.simpleName»");
+					} else {
+						return new «returnType.toString»(this.getProjectStatementList(), this.getFieldName() + ".«field.simpleName»");
+					}
+				'''
+			]
+		}
+		utilsClass.addMethod("project") [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			abstract = false
+			static = true
+			returnType = ProjectStatementList.newTypeReference
+			addParameter(
+				"configurationCallback",
+				Procedure1.newTypeReference(
+					projectFieldClass.newTypeReference
+				)
+			)
+			body = '''
+				final «ProjectStatementList.name» projection = new «ProjectStatementList.name»();
+				configurationCallback.apply(new «projectFieldClass.newTypeReference.toString»(projection, null));
+				return projection;
+			'''
+		]
 	}
 
 	def static TypeReference getFilterFieldType(extension TransformationContext context, TypeReference typeReference) {
 		switch (typeReference) {
-			case MongoBean.newTypeReference.isAssignableFrom(typeReference):
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
+				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
 				findClass(typeReference.name.filterFieldClassName).newTypeReference
 			case Number.newTypeReference.isAssignableFrom(typeReference):
 				FilterNumberField.newTypeReference
@@ -281,7 +338,8 @@ class MongoBeanImplementationHelper {
 
 	def static TypeReference getUpdateFieldType(extension TransformationContext context, TypeReference typeReference) {
 		switch (typeReference) {
-			case MongoBean.newTypeReference.isAssignableFrom(typeReference):
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
+				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
 				findClass(typeReference.name.updateFieldClassName).newTypeReference
 			case Number.newTypeReference.isAssignableFrom(typeReference):
 				UpdateNumberField.newTypeReference
@@ -290,7 +348,17 @@ class MongoBeanImplementationHelper {
 		}
 	}
 
-	def static dispatch implementedInterfaces(MutableClassDeclaration it) { return implementedInterfaces }
+	def static TypeReference getProjectFieldType(extension TransformationContext context, TypeReference typeReference) {
+		switch (typeReference) {
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
+				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
+				findClass(typeReference.name.projectFieldClassName).newTypeReference
+			default:
+				ProjectField.newTypeReference
+		}
+	}
 
-	def static dispatch implementedInterfaces(MutableInterfaceDeclaration it) { return extendedInterfaces }
+	def static dispatch appliedInterfaces(MutableClassDeclaration it) { return implementedInterfaces }
+
+	def static dispatch appliedInterfaces(MutableInterfaceDeclaration it) { return extendedInterfaces }
 }

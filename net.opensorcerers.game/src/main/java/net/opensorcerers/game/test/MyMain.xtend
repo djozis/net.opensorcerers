@@ -80,5 +80,9 @@ class MyMain {
 			], it)
 		]
 		println(sync[collection.find.first(it)].mixedInString)
+		println(
+			sync[collection.find.projection(MyBeanMixin.Utils.project[mixedInString.include]).first(it)].mixedInString)
+		println(
+			sync[collection.find.projection(MyBeanMixin.Utils.project[mixedInString.include]).first(it)].another)
 	}
 }

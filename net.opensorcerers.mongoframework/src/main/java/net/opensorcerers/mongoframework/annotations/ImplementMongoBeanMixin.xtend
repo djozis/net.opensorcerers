@@ -5,6 +5,7 @@ import java.lang.annotation.Retention
 import java.lang.annotation.Target
 import java.util.List
 import net.opensorcerers.mongoframework.annotations.lib.MongoBeanImplementationHelper
+import net.opensorcerers.mongoframework.lib.MongoBeanMixin
 import org.eclipse.xtend.lib.macro.Active
 import org.eclipse.xtend.lib.macro.RegisterGlobalsContext
 import org.eclipse.xtend.lib.macro.RegisterGlobalsParticipant
@@ -38,6 +39,10 @@ class ImplementMongoBeanMixinProcessor implements TransformationParticipant<Muta
 				addParameter(field.simpleName, field.type)
 			]
 			field.remove
+		}
+
+		if (!extendedInterfaces.toList.contains(MongoBeanMixin.newTypeReference)) {
+			extendedInterfaces = extendedInterfaces + #[MongoBeanMixin.newTypeReference]
 		}
 	}
 
