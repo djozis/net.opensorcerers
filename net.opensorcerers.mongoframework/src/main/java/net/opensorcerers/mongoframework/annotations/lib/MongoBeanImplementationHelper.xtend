@@ -28,6 +28,10 @@ import org.eclipse.xtend.lib.macro.declaration.Visibility
 import org.eclipse.xtext.xbase.lib.Functions.Function1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure2
+import net.opensorcerers.mongoframework.lib.index.IndexField
+import net.opensorcerers.mongoframework.lib.index.IndexBeanField
+import net.opensorcerers.mongoframework.lib.index.IndexStatementList
+import net.opensorcerers.mongoframework.lib.index.IndexModelExtended
 
 class MongoBeanImplementationHelper {
 	def static String getUtilsClassName(TypeDeclaration declaration) {
@@ -62,11 +66,20 @@ class MongoBeanImplementationHelper {
 		return qualifiedName + ".ProjectField"
 	}
 
+	def static String getIndexFieldClassName(TypeDeclaration declaration) {
+		return declaration.qualifiedName.indexFieldClassName
+	}
+
+	def static String getIndexFieldClassName(String qualifiedName) {
+		return qualifiedName + ".IndexField"
+	}
+
 	def static doRegisterGlobals(TypeDeclaration annotatedClass, extension RegisterGlobalsContext context) {
 		context.registerClass(annotatedClass.utilsClassName)
 		context.registerClass(annotatedClass.filterFieldClassName)
 		context.registerClass(annotatedClass.updateFieldClassName)
 		context.registerClass(annotatedClass.projectFieldClassName)
+		context.registerClass(annotatedClass.indexFieldClassName)
 	}
 
 	def static doTransform(MutableTypeDeclaration it, extension TransformationContext transformationContext) {
@@ -322,6 +335,52 @@ class MongoBeanImplementationHelper {
 				return projection;
 			'''
 		]
+
+		val indexFieldClass = findClass(indexFieldClassName)
+		indexFieldClass.primarySourceElement = transformingClass.primarySourceElement
+		indexFieldClass.extendedClass = IndexBeanField.newTypeReference
+		indexFieldClass.addConstructor [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			addParameter("indexStatementList", IndexStatementList.newTypeReference)
+			addParameter("fieldName", String.newTypeReference)
+			body = '''
+				super(indexStatementList, fieldName);
+			'''
+		]
+		for (field : declaredFields) {
+			indexFieldClass.addMethod("get" + field.simpleName.toFirstUpper) [
+				primarySourceElement = field.primarySourceElement
+				addAnnotation(Pure.newAnnotationReference)
+				visibility = Visibility.PUBLIC
+				returnType = transformationContext.getIndexFieldType(field.type)
+				body = '''
+					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
+						return new «returnType.toString»(this.getIndexStatementList(), "«field.simpleName»");
+					} else {
+						return new «returnType.toString»(this.getIndexStatementList(), this.getFieldName() + ".«field.simpleName»");
+					}
+				'''
+			]
+		}
+		utilsClass.addMethod("index") [
+			primarySourceElement = transformingClass.primarySourceElement
+			visibility = Visibility.PUBLIC
+			abstract = false
+			static = true
+			returnType = IndexModelExtended.newTypeReference
+			addParameter(
+				"configurationCallback",
+				Procedure1.newTypeReference(
+					indexFieldClass.newTypeReference
+				)
+			)
+			body = '''
+				final «IndexStatementList.name» keys = new «IndexStatementList.name»();
+				configurationCallback.apply(new «indexFieldClass.newTypeReference.toString»(keys, null));
+				return new «IndexModelExtended.newTypeReference.toString»(keys);
+			'''
+		]
 	}
 
 	def static TypeReference getFilterFieldType(extension TransformationContext context, TypeReference typeReference) {
@@ -355,6 +414,16 @@ class MongoBeanImplementationHelper {
 				findClass(typeReference.name.projectFieldClassName).newTypeReference
 			default:
 				ProjectField.newTypeReference
+		}
+	}
+
+	def static TypeReference getIndexFieldType(extension TransformationContext context, TypeReference typeReference) {
+		switch (typeReference) {
+			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
+				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
+				findClass(typeReference.name.indexFieldClassName).newTypeReference
+			default:
+				IndexField.newTypeReference
 		}
 	}
 
