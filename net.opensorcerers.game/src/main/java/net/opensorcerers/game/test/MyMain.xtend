@@ -1,32 +1,19 @@
 package net.opensorcerers.game.test
 
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.client.MongoDatabase
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.xml.ws.Holder
+import net.opensorcerers.game.server.mongo.ApplicationDatabase
 import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
-import net.opensorcerers.mongoframework.lib.MongoBeanCodecProvider
-import net.opensorcerers.mongoframework.lib.index.IndexModelExtended
 import net.opensorcerers.mongoframework.lib.index.IndexStatementList
-import net.opensorcerers.mongoframework.lib.index.IndexesHelper
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.CodecRegistries
 
 class MyMain {
 	def static void main(String[] args) {
 		var TestDatabaseConnectivity databaseConnectivity = null
 		try {
-			databaseConnectivity = new TestDatabaseConnectivity
-			databaseConnectivity.open
-			databaseConnectivity.database.withCodecRegistry(CodecRegistries.fromProviders(
-				new MongoBeanCodecProvider,
-				new ValueCodecProvider,
-				new DocumentCodecProvider,
-				new BsonValueCodecProvider
-			)).runTest
+			(databaseConnectivity = new TestDatabaseConnectivity)
+			new ApplicationDatabase(databaseConnectivity.open.database).runTest
 		} finally {
 			databaseConnectivity?.close
 		}
@@ -49,8 +36,8 @@ class MyMain {
 		}
 	}
 
-	def static runTest(MongoDatabase database) {
-		val collection = database.getCollection("col", MyBean)
+	def static runTest(ApplicationDatabase database) {
+		val collection = database.myBeans
 		sync[
 			collection.insertOne(new MyBean => [
 				zzz = "TESTvalue"
@@ -66,12 +53,12 @@ class MyMain {
 		println((sync[collection.find.first(it)].another as MyBeanMixin).mixedInString)
 		println("OK")
 		println(sync[
-			collection.find(MyBean.Utils.filter [
+			collection.findWhere [
 				another.mixedInString.exists && another.mixedInString == "mixed in!" && another.zzz == "Another value"
-			]).first(it)
+			].first(it)
 		]._id)
 		sync[
-			collection.updateOne(MyBean.Utils.filter[zzz == "TESTvalue"], MyBean.Utils.update [
+			collection.updateOneWhere([zzz == "TESTvalue"], [
 				zzz.unset
 				another.zzz = "Another!"
 			], it)
@@ -79,34 +66,41 @@ class MyMain {
 		println(sync[collection.find.first(it)].zzz)
 		println(sync[collection.find.first(it)].another.zzz)
 		sync[
-			collection.updateOne(MyBeanMixin.Utils.filter[mixedInString == "donkey"], MyBeanMixin.Utils.update [
+			collection.updateOneWhere( [mixedInString == "donkey"], [
 				mixedInString = "mixxy"
 			], it)
 		]
 		println(sync[collection.find.first(it)].mixedInString)
-		println(
-			sync[collection.find.projection(MyBeanMixin.Utils.project[mixedInString.include]).first(it)].mixedInString)
-		println(sync[collection.find.projection(MyBeanMixin.Utils.project[mixedInString.include]).first(it)].another)
+		println(sync[collection.find.projection[mixedInString.include].first(it)].mixedInString)
+		println(sync[collection.find.projection[mixedInString.include].first(it)].another)
 
-		println("Created Index: " + sync[
-			collection.createIndexes(#[MyBeanMixin.Utils.index [
-				mixedInString.ascending
-			].withOptions [
-				expireAfter(5000l, TimeUnit.SECONDS)
-				sparse(true)
-				name("Awesome")
-			]], it)
-		])
+		sync[
+			collection.setIndexes([
+				createIndex[
+					mixedInString.ascending
+					return
+				].withOptions [
+					expireAfter(5000l, TimeUnit.SECONDS)
+					sparse(true)
+					name("Awesome")
+				]
+			], it)
+		]
+		println("FIRST INDEXES:")
 		sync[collection.listIndexes(IndexStatementList).forEach([println(it.toString)], it)]
 		sync[
-			IndexesHelper.setIndexes(collection, #[MyBeanMixin.Utils.index [
-				mixedInString.ascending
-			].withOptions [
-				expireAfter(2000l, TimeUnit.SECONDS)
-				sparse(true)
-				name("Awesome")
-			]], it)
+			collection.setIndexes([
+				createIndex[
+					mixedInString.ascending
+					return
+				].withOptions [
+					expireAfter(2000l, TimeUnit.SECONDS)
+					sparse(true)
+					name("Awesome")
+				]
+			], it)
 		]
+		println("SECOND INDEXES:")
 		sync[collection.listIndexes(IndexStatementList).forEach([println(it.toString)], it)]
 	}
 }

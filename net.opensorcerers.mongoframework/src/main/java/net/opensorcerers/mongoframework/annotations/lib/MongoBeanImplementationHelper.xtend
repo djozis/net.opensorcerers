@@ -4,10 +4,15 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import net.opensorcerers.mongoframework.lib.MongoBean
 import net.opensorcerers.mongoframework.lib.MongoBeanMixin
+import net.opensorcerers.mongoframework.lib.MongoBeanUtils
 import net.opensorcerers.mongoframework.lib.filter.FilterBeanField
 import net.opensorcerers.mongoframework.lib.filter.FilterExpression
 import net.opensorcerers.mongoframework.lib.filter.FilterField
 import net.opensorcerers.mongoframework.lib.filter.FilterNumberField
+import net.opensorcerers.mongoframework.lib.index.IndexBeanField
+import net.opensorcerers.mongoframework.lib.index.IndexField
+import net.opensorcerers.mongoframework.lib.index.IndexModelExtended
+import net.opensorcerers.mongoframework.lib.index.IndexStatementList
 import net.opensorcerers.mongoframework.lib.project.ProjectBeanField
 import net.opensorcerers.mongoframework.lib.project.ProjectField
 import net.opensorcerers.mongoframework.lib.project.ProjectStatementList
@@ -28,10 +33,6 @@ import org.eclipse.xtend.lib.macro.declaration.Visibility
 import org.eclipse.xtext.xbase.lib.Functions.Function1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure2
-import net.opensorcerers.mongoframework.lib.index.IndexField
-import net.opensorcerers.mongoframework.lib.index.IndexBeanField
-import net.opensorcerers.mongoframework.lib.index.IndexStatementList
-import net.opensorcerers.mongoframework.lib.index.IndexModelExtended
 
 class MongoBeanImplementationHelper {
 	def static String getUtilsClassName(TypeDeclaration declaration) {
@@ -381,6 +382,14 @@ class MongoBeanImplementationHelper {
 				return new «IndexModelExtended.newTypeReference.toString»(keys);
 			'''
 		]
+
+		utilsClass.extendedClass = MongoBeanUtils.newTypeReference(
+			transformingClass.newTypeReference,
+			filterFieldClass.newTypeReference,
+			updateFieldClass.newTypeReference,
+			projectFieldClass.newTypeReference,
+			indexFieldClass.newTypeReference
+		)
 	}
 
 	def static TypeReference getFilterFieldType(extension TransformationContext context, TypeReference typeReference) {
