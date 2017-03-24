@@ -33,6 +33,8 @@ gwt {
 	modules 'net.opensorcerers.game.GameClient'
 	
 	maxHeapSize = "1024M"
+    
+    cacheDir = file("${buildDir}/gwtCache")
 }
 clean.delete 'war'
 

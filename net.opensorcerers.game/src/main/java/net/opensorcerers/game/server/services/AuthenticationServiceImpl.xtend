@@ -11,16 +11,29 @@ import net.opensorcerers.game.shared.ResponseOrError
 import static net.opensorcerers.game.shared.ResponseOrError.*
 
 import static extension net.opensorcerers.util.PasswordHashing.*
+import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
+import com.google.gwt.user.client.rpc.AsyncCallback
+import net.opensorcerers.game.server.ApplicationResources
 
-@GwtService @WebServlet("/app/authenticationService") class AuthenticationServiceImpl {
-	override ResponseOrError<Void> createAccount(String email, String password) {
+@ImplementFrameworkServerService class AuthenticationServiceImpl {
+	override void createAccount(String email, String password, AsyncCallback<Void> callback) {
+		val sessionId = threadLocalSessionId
+		ApplicationResources.instance.database.authenticationIdPassword.countWhere([it.loginId == email]) [ existing, e1 |
+			if (e1 !== null) {
+				callback.onFailure(e1)
+			} else if (existing != 0) {
+				callback.onFailure(new IllegalArgumentException('''User id "«email»" is already in use'''))
+			} else {
+				
+			}
+		]
 		emptyResponseOrError[
 			val user = new DBUser => [
 				alias = new Random().nextLong.toString
 			]
 
 			val userConnection = new DBUserSession => [
-				it.id = threadLocalRequest.getSession(true).id
+				it.sessionId = threadLocalRequest.getSession(true).id
 				it.user = user
 			]
 
@@ -29,28 +42,11 @@ import static extension net.opensorcerers.util.PasswordHashing.*
 				it.digest = password.toCharArray.createDigest
 				it.user = user
 			]
-			
-//			ApplicationResources.instance.databaseConnectivity.withDatabaseConnection [
-//				if (!queryClassWhere(
-//					DBAuthenticationIdPassword,
-//					"id" -> email
-//				).empty) {
-//					throw new ClientVisibleException(
-//						'''User id "«email»" is already in use'''
-//					)
-//				}
-//
-//				withTransaction [
-//					persist(user)
-//					persist(authentication)
-//					saveOrUpdate(userConnection)
-//				]
-//			]
 		]
 	}
 
-	override ResponseOrError<Void> logIn(String email, String password) {
-		emptyResponseOrError[
+//	override ResponseOrError<Void> logIn(String email, String password) {
+//		emptyResponseOrError[
 //			ApplicationResources.instance.databaseConnectivity.withDatabaseConnection [
 //				val authentication = queryClassWhere(
 //					DBAuthenticationIdPassword,
@@ -70,6 +66,6 @@ import static extension net.opensorcerers.util.PasswordHashing.*
 //				]
 //				withTransaction[saveOrUpdate(userConnection)]
 //			]
-		]
-	}
+//		]
+//	}
 }

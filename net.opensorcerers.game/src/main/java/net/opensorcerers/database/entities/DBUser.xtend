@@ -1,10 +1,10 @@
 package net.opensorcerers.database.entities
 
-import java.util.UUID
+import net.opensorcerers.mongoframework.annotations.ImplementMongoBean
 import org.eclipse.xtend.lib.annotations.Accessors
 
-@Accessors class DBUser {
-	UUID id
+@ImplementMongoBean @Accessors class DBUser {
+	def getId() { _id }
 
 	String alias
 }

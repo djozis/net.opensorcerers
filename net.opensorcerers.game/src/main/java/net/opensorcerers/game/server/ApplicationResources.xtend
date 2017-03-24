@@ -10,6 +10,7 @@ import net.opensorcerers.game.server.bootstrap.SockJSEventBusVerticle
 import net.opensorcerers.game.server.services.TestClassImpl
 import org.eclipse.xtend.lib.annotations.Accessors
 import net.opensorcerers.game.server.mongo.DatabaseConnectivity
+import net.opensorcerers.game.server.mongo.ApplicationDatabase
 
 /**
  * Static fields can be overridden in unit testing.
@@ -18,10 +19,12 @@ class ApplicationResources implements Closeable {
 	@Accessors static ApplicationResources instance = null
 
 	@Accessors val DatabaseConnectivity databaseConnectivity
+	@Accessors val ApplicationDatabase database
 	val Vertx vertx
 
 	new(DatabaseConnectivity databaseConnectivity) {
 		this.databaseConnectivity = databaseConnectivity.open
+		this.database = new ApplicationDatabase(databaseConnectivity.database)
 		this.vertx = Vertx.vertx.deployVerticles(
 			new SockJSEventBusVerticle,
 			new TestClassImpl
