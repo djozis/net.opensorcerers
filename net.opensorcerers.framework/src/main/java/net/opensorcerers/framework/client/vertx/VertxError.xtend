@@ -7,5 +7,5 @@ import jsinterop.annotations.JsType
 class VertxError {
 	@JsProperty public int failureCode
 	@JsProperty public String failureType
-	@JsProperty public int message
+	@JsProperty public String message
 }

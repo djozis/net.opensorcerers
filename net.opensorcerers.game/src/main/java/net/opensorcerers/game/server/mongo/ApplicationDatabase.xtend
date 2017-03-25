@@ -1,9 +1,7 @@
 package net.opensorcerers.game.server.mongo
 
-import com.mongodb.async.SingleResultCallback
+import co.paralleluniverse.fibers.Fiber
 import com.mongodb.async.client.MongoDatabase
-import java.util.concurrent.CountDownLatch
-import javax.xml.ws.Holder
 import net.opensorcerers.database.entities.DBAuthenticationIdPassword
 import net.opensorcerers.database.entities.DBUser
 import net.opensorcerers.database.entities.DBUserSession
@@ -23,24 +21,13 @@ class ApplicationDatabase {
 	new(MongoDatabase rawDatabase) {
 		rawDatabase.withCodecRegistry(MongoBeanCodecRegistry.create).createCollections
 
-		sync[userSessions.setIndexes([createIndex[sessionId.ascending].withOptions[unique(true)]], it)]
-		sync[authenticationIdPassword.setIndexes([createIndex[loginId.ascending].withOptions[unique(true)]], it)]
-	}
-
-	def static <T> sync((SingleResultCallback<T>)=>void operation) {
-		val latch = new CountDownLatch(1)
-		val holder = new Holder<T>
-		val exceptionHolder = new Holder<Throwable>
-		operation.apply [ result, cause |
-			holder.value = result
-			exceptionHolder.value = cause
-			latch.countDown
-		]
-		latch.await
-		if (exceptionHolder.value !== null) {
-			throw exceptionHolder.value
-		} else {
-			return holder.value
-		}
+		new Fiber [
+			userSessions.indexes = [
+				createIndex[sessionId.ascending].withOptions[unique(true)]
+			]
+			authenticationIdPassword.indexes = [
+				createIndex[loginId.ascending].withOptions[unique(true)]
+			]
+		].start.join
 	}
 }

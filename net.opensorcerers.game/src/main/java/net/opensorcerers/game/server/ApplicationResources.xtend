@@ -7,10 +7,11 @@ import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import javax.xml.ws.Holder
 import net.opensorcerers.game.server.bootstrap.SockJSEventBusVerticle
+import net.opensorcerers.game.server.mongo.ApplicationDatabase
+import net.opensorcerers.game.server.mongo.DatabaseConnectivity
+import net.opensorcerers.game.server.services.AuthenticationServiceImpl
 import net.opensorcerers.game.server.services.TestClassImpl
 import org.eclipse.xtend.lib.annotations.Accessors
-import net.opensorcerers.game.server.mongo.DatabaseConnectivity
-import net.opensorcerers.game.server.mongo.ApplicationDatabase
 
 /**
  * Static fields can be overridden in unit testing.
@@ -27,7 +28,8 @@ class ApplicationResources implements Closeable {
 		this.database = new ApplicationDatabase(databaseConnectivity.database)
 		this.vertx = Vertx.vertx.deployVerticles(
 			new SockJSEventBusVerticle,
-			new TestClassImpl
+			new TestClassImpl,
+			new AuthenticationServiceImpl
 		)
 	}
 

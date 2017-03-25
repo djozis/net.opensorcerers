@@ -1,5 +1,6 @@
 package net.opensorcerers.mongoframework.lib
 
+import co.paralleluniverse.fibers.Suspendable
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.MongoCollection
@@ -9,9 +10,8 @@ import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.UpdateOptions
-import com.mongodb.client.result.DeleteResult
-import com.mongodb.client.result.UpdateResult
 import java.lang.reflect.Constructor
 import java.lang.reflect.ParameterizedType
 import java.util.ArrayList
@@ -26,12 +26,13 @@ import net.opensorcerers.mongoframework.lib.project.ProjectBeanField
 import net.opensorcerers.mongoframework.lib.project.ProjectStatementList
 import net.opensorcerers.mongoframework.lib.update.UpdateBeanField
 import net.opensorcerers.mongoframework.lib.update.UpdateStatementList
-import org.eclipse.xtend.lib.annotations.Delegate
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
-@FinalFieldsConstructor abstract class MongoBeanCollection<T extends MongoBeanUtils<Bean, Filter, Update, Project, Index>, Bean, Filter extends FilterBeanField, Update extends UpdateBeanField, Project extends ProjectBeanField, Index extends IndexBeanField> implements MongoCollection<Bean> {
+import static net.opensorcerers.mongoframework.lib.FiberBlockingSingleResultCallback.*
+
+@FinalFieldsConstructor abstract class MongoBeanCollection<T extends MongoBeanUtils<Bean, Filter, Update, Project, Index>, Bean, Filter extends FilterBeanField, Update extends UpdateBeanField, Project extends ProjectBeanField, Index extends IndexBeanField> {
 	val Class<T> utilsClass
-	@Delegate val MongoCollection<Bean> collection
+	val MongoCollection<Bean> collection
 
 	new(Class<T> utilsClass, MongoDatabase database, String collectionName) {
 		this(utilsClass, database.getCollection(collectionName, utilsClass.enclosingClass) as MongoCollection<Bean>)
@@ -53,15 +54,16 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 			getConstructor(args)
 	}
 
+	val Constructor<Bean> beanConstructor = getClassParameterConstructor(1)
 	val Constructor<Filter> filterConstructor = getClassParameterConstructor(2, String)
 	val Constructor<Update> updateConstructor = getClassParameterConstructor(3, UpdateStatementList, String)
 	val Constructor<Project> projectConstructor = getClassParameterConstructor(4, ProjectStatementList, String)
 	val Constructor<Index> indexConstructor = getClassParameterConstructor(5, IndexStatementList, String)
 
-	def setIndexes((CreateIndexesHandler<Index>)=>void configurationCallback, SingleResultCallback<Void> callback) {
+	@Suspendable def setIndexes((CreateIndexesHandler<Index>)=>void configurationCallback) {
 		val indexesHandler = new CreateIndexesHandler(indexConstructor)
 		configurationCallback.apply(indexesHandler)
-		collection.setCollectionIndexes(indexesHandler.indexes, callback)
+		fiberBlockingCallback[collection.setCollectionIndexes(indexesHandler.indexes, it)].run
 	}
 
 	@FinalFieldsConstructor static class CreateIndexesHandler<T extends IndexBeanField> {
@@ -79,8 +81,11 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 		def withOptions(IndexModelExtended index, (IndexOptions)=>void callback) { callback.apply(index.options) }
 	}
 
-	def static setCollectionIndexes(MongoCollection<?> collection, List<IndexModelExtended> indexes,
-		SingleResultCallback<Void> callback) {
+	protected def static setCollectionIndexes(
+		MongoCollection<?> collection,
+		List<IndexModelExtended> indexes,
+		SingleResultCallback<Void> callback
+	) {
 		collection.listIndexes(IndexModelExtended).into(new ArrayList<IndexModelExtended>) [ indexList, error |
 			try {
 				if (error !== null) {
@@ -90,7 +95,9 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 					val IndexModelExtended[] toCreate = indexes.filter[!indexList.contains(it)]
 					val ()=>void afterDrop = [
 						if (!toCreate.empty) {
-							collection.createIndexes(toCreate)[list, createError|callback.onResult(null, createError)]
+							collection.createIndexes(toCreate) [ list, createError |
+								callback.onResult(null, createError)
+							]
 						} else {
 							callback.onResult(null, null)
 						}
@@ -135,10 +142,10 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * Counts the number of documents in the collection according to the given options.
 	 * 
 	 * @param filter   the query filter
-	 * @param callback the callback passed the number of documents in the collection
+	 * @return         the number of documents in the collection
 	 */
-	def countWhere((Filter)=>FilterExpression filter, SingleResultCallback<Long> callback) {
-		count(filter.build, callback)
+	@Suspendable def countWhere((Filter)=>FilterExpression filter) {
+		return fiberBlockingCallback[collection.count(filter.build, it)].run
 	}
 
 	/**
@@ -146,10 +153,10 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter   the query filter
 	 * @param options  the options describing the count
-	 * @param callback the callback passed the number of documents in the collection
+	 * @return          the number of documents in the collection
 	 */
-	def countWhere((Filter)=>FilterExpression filter, CountOptions options, SingleResultCallback<Long> callback) {
-		count(filter.build, options, callback)
+	@Suspendable def countWhere((Filter)=>FilterExpression filter, CountOptions options) {
+		return fiberBlockingCallback[collection.count(filter.build, options, it)].run
 	}
 
 	/**
@@ -159,7 +166,7 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @return the find iterable interface
 	 * @mongodb.driver.manual tutorial/query-documents/ Find
 	 */
-	override MongoBeanFindIterable<Bean, Project> find() { return collection.find.wrap }
+	def find() { return collection.find.wrap }
 
 	/**
 	 * Finds all documents in the collection.
@@ -168,33 +175,33 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @return the find iterable interface
 	 * @mongodb.driver.manual tutorial/query-documents/ Find
 	 */
-	def findWhere((Filter)=>FilterExpression filter) { return find(filter.build).wrap }
+	def findWhere((Filter)=>FilterExpression filter) { return collection.find(filter.build).wrap }
 
 	/**
 	 * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
 	 * modified.
 	 * 
 	 * @param filter   the query filter to apply the the delete operation
-	 * @param callback the callback passed the result of the remove one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the remove one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 */
-	def deleteOneWhere((Filter)=>FilterExpression filter, SingleResultCallback<DeleteResult> callback) {
-		deleteOne(filter.build, callback)
+	@Suspendable def deleteOneWhere((Filter)=>FilterExpression filter) {
+		return fiberBlockingCallback[collection.deleteOne(filter.build, it)].run
 	}
 
 	/**
 	 * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
 	 * 
 	 * @param filter   the query filter to apply the the delete operation
-	 * @param callback the callback passed the result of the remove many operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the remove many operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 */
-	def deleteManyWhere((Filter)=>FilterExpression filter, SingleResultCallback<DeleteResult> callback) {
-		deleteMany(filter.build, callback)
+	@Suspendable def deleteManyWhere((Filter)=>FilterExpression filter) {
+		return fiberBlockingCallback[collection.deleteMany(filter.build, it)].run
 	}
 
 	/**
@@ -202,18 +209,14 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter      the query filter to apply the the replace operation
 	 * @param replacement the replacement document
-	 * @param callback    the callback passed the result of the replace one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return            the result of the replace one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
 	 */
-	def replaceOneWhere(
-		(Filter)=>FilterExpression filter,
-		Bean replacement,
-		SingleResultCallback<UpdateResult> callback
-	) {
-		replaceOne(filter.build, replacement, callback)
+	@Suspendable def replaceOneWhere((Filter)=>FilterExpression filter, Bean replacement) {
+		return fiberBlockingCallback[collection.replaceOne(filter.build, replacement, it)].run
 	}
 
 	/**
@@ -222,19 +225,14 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @param filter      the query filter to apply the the replace operation
 	 * @param replacement the replacement document
 	 * @param options     the options to apply to the replace operation
-	 * @param callback    the callback passed the result of the replace one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the replace one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
 	 */
-	def replaceOneWhere(
-		(Filter)=>FilterExpression filter,
-		Bean replacement,
-		UpdateOptions options,
-		SingleResultCallback<UpdateResult> callback
-	) {
-		replaceOne(filter.build, replacement, options, callback)
+	@Suspendable def replaceOneWhere((Filter)=>FilterExpression filter, Bean replacement, UpdateOptions options) {
+		return fiberBlockingCallback[collection.replaceOne(filter.build, replacement, options, it)].run
 	}
 
 	/**
@@ -242,19 +240,15 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators.
-	 * @param callback the callback passed the result of the update one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the update one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/ Updates
 	 * @mongodb.driver.manual reference/operator/update/ Update Operators
 	 */
-	def updateOneWhere(
-		(Filter)=>FilterExpression filter,
-		(Update)=>void update,
-		SingleResultCallback<UpdateResult> callback
-	) {
-		updateOne(filter.build, update.build, callback)
+	@Suspendable def updateOneWhere((Filter)=>FilterExpression filter, (Update)=>void update) {
+		return fiberBlockingCallback[collection.updateOne(filter.build, update.build, it)].run
 	}
 
 	/**
@@ -263,20 +257,37 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators.
 	 * @param options  the options to apply to the update operation
-	 * @param callback the callback passed the result of the update one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the update one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/ Updates
 	 * @mongodb.driver.manual reference/operator/update/ Update Operators
 	 */
-	def updateOneWhere(
+	@Suspendable def updateOneWhere((Filter)=>FilterExpression filter, (Update)=>void update, UpdateOptions options) {
+		return fiberBlockingCallback[collection.updateOne(filter.build, update.build, options, it)].run
+	}
+
+	/**
+	 * Update a single document in the collection according to the specified arguments.
+	 * 
+	 * @param filter   the query filter, which may not be null.
+	 * @param update   the update, which may not be null. The update to apply must include only update operators.
+	 * @param options  the options to apply to the update operation
+	 * @return         the result of the update one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
+	 * @mongodb.driver.manual tutorial/modify-documents/ Updates
+	 * @mongodb.driver.manual reference/operator/update/ Update Operators
+	 */
+	@Suspendable def updateOneWhere(
 		(Filter)=>FilterExpression filter,
 		(Update)=>void update,
-		UpdateOptions options,
-		SingleResultCallback<UpdateResult> callback
+		(UpdateOptions)=>void options
 	) {
-		updateOne(filter.build, update.build, options, callback)
+		return fiberBlockingCallback[collection.updateOne(filter.build, update.build, new UpdateOptions => options, it)].
+			run
 	}
 
 	/**
@@ -284,19 +295,15 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators. T
-	 * @param callback the callback passed the result of the update one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the update one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/ Updates
 	 * @mongodb.driver.manual reference/operator/update/ Update Operators
 	 */
-	def updateManyWhere(
-		(Filter)=>FilterExpression filter,
-		(Update)=>void update,
-		SingleResultCallback<UpdateResult> callback
-	) {
-		updateMany(filter.build, update.build, callback)
+	@Suspendable def updateManyWhere((Filter)=>FilterExpression filter, (Update)=>void update) {
+		return fiberBlockingCallback[collection.updateMany(filter.build, update.build, it)].run
 	}
 
 	/**
@@ -305,31 +312,26 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators.
 	 * @param options  the options to apply to the update operation
-	 * @param callback the callback passed the result of the update one operation
-	 * @throws com.mongodb.MongoWriteException        returned via the callback
-	 * @throws com.mongodb.MongoWriteConcernException returned via the callback
-	 * @throws com.mongodb.MongoException             returned via the callback
+	 * @return         the result of the update one operation
+	 * @throws com.mongodb.MongoWriteException        
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException             
 	 * @mongodb.driver.manual tutorial/modify-documents/ Updates
 	 * @mongodb.driver.manual reference/operator/update/ Update Operators
 	 */
-	def updateManyWhere(
-		(Filter)=>FilterExpression filter,
-		(Update)=>void update,
-		UpdateOptions options,
-		SingleResultCallback<UpdateResult> callback
-	) {
-		updateMany(filter.build, update.build, options, callback)
+	@Suspendable def updateManyWhere((Filter)=>FilterExpression filter, (Update)=>void update, UpdateOptions options) {
+		return fiberBlockingCallback[collection.updateMany(filter.build, update.build, options, it)].run
 	}
 
 	/**
 	 * Atomically find a document and remove it.
 	 * 
 	 * @param filter   the query filter to find the document with
-	 * @param callback the callback passed the document that was removed.  If no documents matched the query filter, then null will be
+	 * return          the document that was removed.  If no documents matched the query filter, then null will be
 	 *                 returned
 	 */
-	def findOneAndDeleteWhere((Filter)=>FilterExpression filter, SingleResultCallback<Bean> callback) {
-		findOneAndDelete(filter.build, callback)
+	@Suspendable def findOneAndDeleteWhere((Filter)=>FilterExpression filter) {
+		return fiberBlockingCallback[collection.findOneAndDelete(filter.build, it)].run
 	}
 
 	/**
@@ -337,15 +339,11 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter   the query filter to find the document with
 	 * @param options  the options to apply to the operation
-	 * @param callback the callback passed the document that was removed.  If no documents matched the query filter, then null will be
+	 * return          the document that was removed.  If no documents matched the query filter, then null will be
 	 *                 returned
 	 */
-	def findOneAndDeleteWhere(
-		(Filter)=>FilterExpression filter,
-		FindOneAndDeleteOptions options,
-		SingleResultCallback<Bean> callback
-	) {
-		findOneAndDelete(filter.build, options, callback)
+	@Suspendable def findOneAndDeleteWhere((Filter)=>FilterExpression filter, FindOneAndDeleteOptions options) {
+		return fiberBlockingCallback[collection.findOneAndDelete(filter.build, options, it)].run
 	}
 
 	/**
@@ -353,16 +351,12 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter      the query filter to apply the the replace operation
 	 * @param replacement the replacement document
-	 * @param callback    the callback passed the document that was replaced.  Depending on the value of the {@code returnOriginal}
+	 * @return            the document that was replaced.  Depending on the value of the {@code returnOriginal}
 	 *                    property, this will either be the document as it was before the update or as it is after the update.  If no
 	 *                    documents matched the query filter, then null will be returned
 	 */
-	def findOneAndReplaceWhere(
-		(Filter)=>FilterExpression filter,
-		Bean replacement,
-		SingleResultCallback<Bean> callback
-	) {
-		findOneAndReplace(filter.build, replacement, callback)
+	@Suspendable def findOneAndReplaceWhere((Filter)=>FilterExpression filter, Bean replacement) {
+		return fiberBlockingCallback[collection.findOneAndReplace(filter.build, replacement, it)].run
 	}
 
 	/**
@@ -371,17 +365,16 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @param filter      the query filter to apply the the replace operation
 	 * @param replacement the replacement document
 	 * @param options     the options to apply to the operation
-	 * @param callback    the callback passed the document that was replaced.  Depending on the value of the {@code returnOriginal}
+	 * @return             the document that was replaced.  Depending on the value of the {@code returnOriginal}
 	 *                    property, this will either be the document as it was before the update or as it is after the update.  If no
 	 *                    documents matched the query filter, then null will be returned
 	 */
-	def findOneAndReplaceWhere(
+	@Suspendable def findOneAndReplaceWhere(
 		(Filter)=>FilterExpression filter,
 		Bean replacement,
-		FindOneAndReplaceOptions options,
-		SingleResultCallback<Bean> callback
+		FindOneAndReplaceOptions options
 	) {
-		findOneAndReplace(filter.build, replacement, options, callback)
+		return fiberBlockingCallback[collection.findOneAndReplace(filter.build, replacement, options, it)].run
 	}
 
 	/**
@@ -389,15 +382,11 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * 
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators.
-	 * @param callback the callback passed the document that was updated before the update was applied.  If no documents matched the query
+	 * @return         the document that was updated before the update was applied.  If no documents matched the query
 	 *                 filter, then null will be returned
 	 */
-	def findOneAndUpdateWhere(
-		(Filter)=>FilterExpression filter,
-		(Update)=>void update,
-		SingleResultCallback<Bean> callback
-	) {
-		findOneAndUpdate(filter.build, update.build, callback)
+	@Suspendable def findOneAndUpdateWhere((Filter)=>FilterExpression filter, (Update)=>void update) {
+		return fiberBlockingCallback[collection.findOneAndUpdate(filter.build, update.build, it)].run
 	}
 
 	/**
@@ -406,16 +395,66 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 	 * @param filter   the query filter, which may not be null.
 	 * @param update   the update, which may not be null. The update to apply must include only update operators.
 	 * @param options  the options to apply to the operation
-	 * @param callback the callback passed the document that was updated.  Depending on the value of the {@code returnOriginal} property,
+	 * @return		   Depending on the value of the {@code returnOriginal} property,
 	 *                 this will either be the document as it was before the update or as it is after the update.  If no documents matched
 	 *                 the query filter, then null will be returned
 	 */
-	def findOneAndUpdateWhere(
+	@Suspendable def findOneAndUpdateWhere(
 		(Filter)=>FilterExpression filter,
 		(Update)=>void update,
-		FindOneAndUpdateOptions options,
-		SingleResultCallback<Bean> callback
+		FindOneAndUpdateOptions options
 	) {
-		findOneAndUpdate(filter.build, update.build, options, callback)
+		return fiberBlockingCallback[collection.findOneAndUpdate(filter.build, update.build, options, it)].run
+	}
+
+	/**
+	 * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
+	 * 
+	 * @param document the document to insert
+	 * @throws com.mongodb.MongoWriteException 
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException 
+	 */
+	@Suspendable def void insertOne(Bean document) {
+		fiberBlockingCallback[collection.insertOne(document, it)].run
+	}
+
+	/**
+	 * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
+	 * 
+	 * @param configureDocument a lambda to configure the document to insert
+	 * @throws com.mongodb.MongoWriteException 
+	 * @throws com.mongodb.MongoWriteConcernException 
+	 * @throws com.mongodb.MongoException 
+	 */
+	@Suspendable def Bean insertOne((Bean)=>void configureDocument) {
+		val document = beanConstructor.newInstance => configureDocument
+		fiberBlockingCallback[collection.insertOne(document, it)].run
+		return document
+	}
+
+	/**
+	 * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
+	 * 
+	 * @param documents the documents to insert
+	 * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+	 * @throws com.mongodb.MongoException          if the write failed due some other failure
+	 * @see MongoCollection#bulkWrite
+	 */
+	@Suspendable def void insertMany(List<? extends Bean> documents) {
+		fiberBlockingCallback[collection.insertMany(documents, it)].run
+	}
+
+	/**
+	 * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
+	 * 
+	 * @param documents the documents to insert
+	 * @param options   the options to apply to the operation
+	 * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+	 * @throws com.mongodb.MongoException          if the write failed due some other failure
+	 * @see MongoCollection#bulkWrite
+	 */
+	@Suspendable def void insertMany(List<? extends Bean> documents, InsertManyOptions options) {
+		fiberBlockingCallback[collection.insertMany(documents, options, it)].run
 	}
 }

@@ -1,5 +1,8 @@
 package net.opensorcerers.game.client
 
+import co.paralleluniverse.fibers.Fiber
+import co.paralleluniverse.strands.SuspendableCallable
+import co.paralleluniverse.strands.SuspendableRunnable
 import com.google.gwt.core.client.Callback
 import com.google.gwt.core.client.GWT
 import com.google.gwt.core.client.ScriptInjector
@@ -14,7 +17,7 @@ import net.opensorcerers.coverage.GWTJacocoAdaptor
 import net.opensorcerers.game.client.lib.chainreaction.ChainLinkAPI
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
-import net.opensorcerers.game.shared.ResponseOrError
+import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
 import net.opensorcerers.game.shared.ServerSideTestProcessingService
 import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
 import net.opensorcerers.util.ReflectionsBootstrap
@@ -24,12 +27,19 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 
 import static net.opensorcerers.game.server.ApplicationResources.*
-import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
 
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	@Accessors val logger = Logger.getLogger(class.simpleName)
 
 	@GwtIncompatible protected static val databaseConnectivity = new TestDatabaseConnectivity
+
+	@GwtIncompatible def getDatabase() { return ApplicationResources.instance.database }
+
+	@GwtIncompatible def inSynchronizedFiber(SuspendableRunnable callback) { new Fiber(callback).start.get }
+
+	@GwtIncompatible def <T> inSynchronizedFiber(SuspendableCallable<T> callback) {
+		return new Fiber(callback).start.get
+	}
 
 	@GwtIncompatible boolean needServerInitialization = true
 
@@ -122,11 +132,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 		return new Callback<T, F>() {
 			val delegate = chain.ifSuccessful(handler).ifFailure[throw it]
 
-			override onSuccess(T result) {
-				delegate.onSuccess(new ResponseOrError<T> => [
-					it.result = result
-				])
-			}
+			override onSuccess(T result) { delegate.onSuccess(result) }
 
 			override onFailure(F caught) {
 				if (caught instanceof Throwable) {

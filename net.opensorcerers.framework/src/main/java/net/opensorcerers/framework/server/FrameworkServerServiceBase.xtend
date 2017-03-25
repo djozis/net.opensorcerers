@@ -8,8 +8,6 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.MultiMap
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
 import net.opensorcerers.framework.shared.HeaderConstants
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure3
 
@@ -54,9 +52,12 @@ abstract class FrameworkServerServiceBase extends AbstractVerticle {
 						canCall = false
 						message.fail(
 							500,
-							(new ByteArrayOutputStream => [
-								caught.printStackTrace(new PrintStream(it))
-							]).toString("UTF-8")
+							caught.message
+						/*
+						 * (new ByteArrayOutputStream => [
+						 * 	caught.printStackTrace(new PrintStream(it))
+						 * ]).toString("UTF-8")
+						 */
 						)
 					}
 				}

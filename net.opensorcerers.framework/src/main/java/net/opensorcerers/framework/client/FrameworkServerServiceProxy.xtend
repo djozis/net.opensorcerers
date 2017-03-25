@@ -15,9 +15,12 @@ import com.google.gwt.json.client.JSONValue
 	protected def void sendRequest(JSONArray jsonArray, AsyncCallback<JSONValue> responseHandler) {
 		eventBus.<String>send(address, jsonArray.toString, null) [ error, message |
 			if (error !== null || message.body === null) {
-				responseHandler.onFailure(new IllegalStateException(
-					error.failureType + " in " + class.name + ": " + error.message
-				))
+				responseHandler.onFailure(new IllegalStateException(error.message))
+			/*
+			 * new IllegalStateException(
+			 * error.failureType + " in " + class.name + ": " + error.message
+			 * ) 
+			 */
 			} else {
 				responseHandler.onSuccess(JSONParser.parseStrict(message.body))
 			}

@@ -1,71 +1,68 @@
 package net.opensorcerers.game.server.services
 
-import de.itemis.xtend.auto.gwt.GwtService
-import java.util.Random
-import javax.servlet.annotation.WebServlet
-import net.opensorcerers.database.entities.DBAuthenticationIdPassword
-import net.opensorcerers.database.entities.DBUser
-import net.opensorcerers.database.entities.DBUserSession
-import net.opensorcerers.game.shared.ResponseOrError
-
-import static net.opensorcerers.game.shared.ResponseOrError.*
-
-import static extension net.opensorcerers.util.PasswordHashing.*
-import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 import com.google.gwt.user.client.rpc.AsyncCallback
+import java.util.Random
+import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 import net.opensorcerers.game.server.ApplicationResources
+
+import static extension net.opensorcerers.game.server.services.Extensions.*
+import static extension net.opensorcerers.util.PasswordHashing.*
 
 @ImplementFrameworkServerService class AuthenticationServiceImpl {
 	override void createAccount(String email, String password, AsyncCallback<Void> callback) {
 		val sessionId = threadLocalSessionId
-		ApplicationResources.instance.database.authenticationIdPassword.countWhere([it.loginId == email]) [ existing, e1 |
-			if (e1 !== null) {
-				callback.onFailure(e1)
-			} else if (existing != 0) {
-				callback.onFailure(new IllegalArgumentException('''User id "«email»" is already in use'''))
-			} else {
-				
+		callback.fulfill [
+			val database = ApplicationResources.instance.database
+			val authenticationRecordId = database.authenticationIdPassword.updateOneWhere(
+				[loginId == email],
+				[
+					loginId.onInsert = email
+					digest.onInsert = password.toCharArray.createDigest
+				],
+				[upsert(true)]
+			).upsertedId
+			if (authenticationRecordId === null) {
+				throw new IllegalArgumentException('''User id "«email»" is already in use''')
 			}
-		]
-		emptyResponseOrError[
-			val user = new DBUser => [
-				alias = new Random().nextLong.toString
-			]
 
-			val userConnection = new DBUserSession => [
-				it.sessionId = threadLocalRequest.getSession(true).id
-				it.user = user
+			val user = database.users.insertOne [
+				alias = new Random().nextInt(100000).toString
 			]
+			database.authenticationIdPassword.updateOneWhere(
+				[loginId == email],
+				[userId = user._id]
+			)
 
-			val authentication = new DBAuthenticationIdPassword => [
-				it.id = email
-				it.digest = password.toCharArray.createDigest
-				it.user = user
-			]
+			database.userSessions.updateOneWhere(
+				[it.sessionId == sessionId],
+				[userId = user._id],
+				[upsert(true)]
+			)
 		]
 	}
 
-//	override ResponseOrError<Void> logIn(String email, String password) {
-//		emptyResponseOrError[
-//			ApplicationResources.instance.databaseConnectivity.withDatabaseConnection [
-//				val authentication = queryClassWhere(
-//					DBAuthenticationIdPassword,
-//					"id" -> email
-//				).head
-//
-//				if (authentication === null) {
-//					throw new ClientVisibleException('''Login id "«email»" does not exist''')
-//				}
-//				if (!authentication.digest.compareDigest(password.toCharArray)) {
-//					throw new ClientVisibleException('''Incorrect password for login id "«email»"''')
-//				}
-//
-//				val userConnection = new DBUserSession => [
-//					it.id = threadLocalRequest.getSession(true).id
-//					it.user = authentication.user
-//				]
-//				withTransaction[saveOrUpdate(userConnection)]
-//			]
-//		]
-//	}
+	override void logIn(String email, String password, AsyncCallback<Void> callback) {
+		val sessionId = threadLocalSessionId
+		callback.fulfill [
+			val database = ApplicationResources.instance.database
+
+			val authenticationRecord = database.authenticationIdPassword.findWhere[loginId == email].projection [
+				digest.include
+				userId.include
+			].first
+
+			if (authenticationRecord === null) {
+				throw new IllegalArgumentException('''Login id "«email»" does not exist''')
+			}
+			if (!authenticationRecord.digest.compareDigest(password.toCharArray)) {
+				throw new IllegalArgumentException('''Incorrect password for login id "«email»"''')
+			}
+
+			database.userSessions.updateOneWhere(
+				[it.sessionId == sessionId],
+				[userId = authenticationRecord.userId],
+				[upsert(true)]
+			)
+		]
+	}
 }

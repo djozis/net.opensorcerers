@@ -28,10 +28,46 @@ subprojects {
     group = 'net.opensorcerers'
     version = '1.0.0-SNAPSHOT'
     
+    ext.quasarClassifier = ':jdk8'
+    ext.quasarVersion = '0.7.7'
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
     
     configurations.all {
         exclude group: 'asm'
     }
+    
+    configurations { quasar }
+    dependencies {
+        compile "co.paralleluniverse:quasar-core:${quasarVersion}${quasarClassifier}"
+        quasar "co.paralleluniverse:quasar-core:${quasarVersion}${quasarClassifier}@jar"
+    }
+    compileJava.dependsOn processResources
+    compileJava {
+        doLast {
+            ant.taskdef(name:'instrumentation', classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.compileOnly).asPath)
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.main.output.classesDir)
+            }
+        }
+    }
+    compileTestJava.dependsOn processTestResources
+    compileTestJava {
+        doLast {
+            ant.taskdef(name: 'instrumentation', classname: 'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.testRuntime + configurations.compileOnly).asPath)
+            ant.instrumentation(verbose: 'true', check: 'true', debug: 'true') {
+                fileset(dir: sourceSets.test.output.classesDir, excludes: 'net/opensorcerers/game/client/**')
+            }
+        }
+    }
+    
+    tasks.withType(Test) {
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+    }
+
+    //applicationDefaultJvmArgs = [
+    //    "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+    //]
+
+    task q << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
 }

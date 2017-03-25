@@ -42,7 +42,7 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 			val chainHolder = ifSuccessful[RootPanel.get.remove(connectingElement)]
 			eventBus.onConnectionOpened = [chainHolder.onSuccess(new ResponseOrError)]
 			ChainReaction.chain [ // TODO: fix this - this shouldn't need to nest.
-				RootPanel.get.add(loginWidget = new LoginWidget [
+				RootPanel.get.add(loginWidget = new LoginWidget(eventBus) [
 					RootPanel.get.add(new Label("SUCCESS"))
 				])
 				new TestClassProxy(eventBus).sayHello(sessionId, new AsyncCallback<String> {

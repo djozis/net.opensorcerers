@@ -1,8 +1,6 @@
 package net.opensorcerers.game.client
 
 import com.google.gwt.core.shared.GwtIncompatible
-import net.opensorcerers.database.entities.DBAuthenticationIdPassword
-import net.opensorcerers.database.entities.DBUser
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import org.junit.Test
 
@@ -51,28 +49,26 @@ class WebappTest extends BootstrappingGWTTestCase {
 	}
 
 	@GwtIncompatible def void serverValidateCreateAccount() {
-//		databaseConnectivity.withDatabaseConnection [
-//			assertEquals(1, queryClassWhere(
-//				DBAuthenticationIdPassword,
-//				"id" -> "user"
-//			).size)
-//		]
+		inSynchronizedFiber[
+			assertEquals(
+				1,
+				database.authenticationIdPassword.countWhere [
+					loginId == "user"
+				]
+			)
+		]
 	}
 
 	@GwtIncompatible def void serverSetupTestLogIntoAccount() {
 		databaseConnectivity.clearDatabase
-		val user = new DBUser => [
-			alias = "alias"
+		inSynchronizedFiber[
+			val user = database.users.insertOne[alias = "alias"]
+			database.authenticationIdPassword.insertOne [
+				loginId = "user2"
+				digest = "pass2".toCharArray.createDigest
+				userId = user._id
+			]
 		]
-		val authentication = new DBAuthenticationIdPassword => [
-			it.id = "user2"
-			it.digest = "pass2".toCharArray.createDigest
-			it.user = user
-		]
-//		databaseConnectivity.databaseTransaction [
-//			persist(user)
-//			persist(authentication)
-//		]
 	}
 
 	@Test def void testLogIntoAccount() {

@@ -3,7 +3,6 @@ package net.opensorcerers.game.client.lib.chainreaction
 import com.google.gwt.core.client.GWT
 import com.google.gwt.user.client.rpc.AsyncCallback
 import java.util.ArrayDeque
-import net.opensorcerers.game.shared.ResponseOrError
 
 /**
  * Support chaining of asynchronous callbacks. Use chainCallback for all service calls,
@@ -70,13 +69,13 @@ class ChainReaction implements ChainLinkAPI {
 		return this
 	}
 
-	static class ChainedCallback<R, T extends ResponseOrError<R>> implements AsyncCallback<T> {
+	static class ChainedCallback<T> implements AsyncCallback<T> {
 		val extension ChainReaction chain
-		val (R)=>void handler
+		val (T)=>void handler
 		var (Throwable)=>void errorHandler = [GWT.log(it.toString)]
 		var boolean hasBeenCalled
 
-		new(ChainReaction chain, (R)=>void handler) {
+		new(ChainReaction chain, (T)=>void handler) {
 			this.chain = chain
 			this.handler = handler
 			hasBeenCalled = false
@@ -95,11 +94,7 @@ class ChainReaction implements ChainLinkAPI {
 			}
 			hasBeenCalled = true
 			ChainReaction.current = chain
-			if (result.exception === null) {
-				handler.apply(result.result)
-			} else {
-				errorHandler.apply(result.exception)
-			}
+			handler.apply(result)
 			ChainReaction.current = null
 			decrementOutstanding
 		}
@@ -116,9 +111,9 @@ class ChainReaction implements ChainLinkAPI {
 		}
 	}
 
-	override <R, T extends ResponseOrError<R>> ifSuccessful((R)=>void handler) {
+	override <T> ifSuccessful((T)=>void handler) {
 		incrementOutstanding
-		return new ChainedCallback<R, T>(this, handler)
+		return new ChainedCallback<T>(this, handler)
 	}
 
 	/**

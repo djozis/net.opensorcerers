@@ -1,5 +1,6 @@
 package net.opensorcerers.game.server
 
+import co.paralleluniverse.fibers.Fiber
 import de.itemis.xtend.auto.gwt.GwtService
 import java.util.List
 import javax.servlet.annotation.WebServlet
