@@ -41,9 +41,9 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 		return new Fiber(callback).start.get
 	}
 
-	@GwtIncompatible boolean needServerInitialization = true
+	@GwtIncompatible static boolean needServerInitialization = true
 
-	@GwtIncompatible def boolean checkInitializeServer() {
+	@GwtIncompatible static def boolean checkInitializeServer() {
 		if (needServerInitialization) {
 			needServerInitialization = false
 			if (ApplicationResources.instance !== null) {
@@ -88,6 +88,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	 * Documentation said do not override or call this method. Didn't say anything about doing both.
 	 */
 	@GwtIncompatible override runTest() {
+		checkInitializeServer
 		currentTest = this
 		GWTJacocoAdaptor.setGwtCoveragePaths
 		super.runTest

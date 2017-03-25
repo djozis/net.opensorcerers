@@ -18,10 +18,14 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 	var MongodExecutable mongodExecutable = null
 	var MongoClient client
 	@Accessors(PUBLIC_GETTER) var MongoDatabase database
-
 	override open() {
 		if (mongodExecutable === null) {
 			mongodExecutable = MongodStarter.defaultInstance.prepare(getMongoConfiguration)
+		}
+		
+		if (class == NormalDatabaseConnectivity){
+			println("NORMAL DB")
+			new IllegalStateException().printStackTrace
 		}
 
 		mongodExecutable.start

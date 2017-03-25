@@ -65,9 +65,5 @@ subprojects {
         jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
     }
 
-    //applicationDefaultJvmArgs = [
-    //    "-javaagent:${configurations.quasar.singleFile}" // =v, =d
-    //]
-
     task q << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
 }

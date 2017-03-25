@@ -56,7 +56,7 @@ class ApplicationResources implements Closeable {
 			instance = null
 		}
 		vertx.close [
-			println("Closed Vertx: " + it)
+			println("Closed Vertx: " + it.succeeded)
 		]
 		databaseConnectivity.close
 	}

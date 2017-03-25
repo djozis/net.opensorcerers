@@ -5,7 +5,7 @@ import java.util.Random
 import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 import net.opensorcerers.game.server.ApplicationResources
 
-import static extension net.opensorcerers.game.server.services.Extensions.*
+import static extension net.opensorcerers.util.Extensions.*
 import static extension net.opensorcerers.util.PasswordHashing.*
 
 @ImplementFrameworkServerService class AuthenticationServiceImpl {
