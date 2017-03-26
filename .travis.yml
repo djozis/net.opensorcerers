@@ -17,7 +17,7 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - sudo service riak stop || true
  - sudo service rsync stop || true
  - sudo service x11-common stop || true
- - top -b -n 1 -o %MEM
+ - top -b -n 1
  - ls -al /var/ramfs
  - rm -rf /var/ramfs/*
 after_success:
