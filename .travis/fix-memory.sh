@@ -2,7 +2,7 @@
 echo ... apt-get update -qq
 apt-get update -qq
 echo ... apt-get install cgroup-bin
-apt-get install libcgroup1 -qq
+apt-get install cgroup-bin -qq
 echo ... 
 cat >> /etc/cgconfig.conf <<- EOF
 group memlimit {
