@@ -1,6 +1,6 @@
 #run with sudo
 
-apt-get install libcgroup
+apt-get install libcgroup1
 cat >> /etc/cgconfig.conf <<- EOF
 group memlimit {
     memory {
