@@ -7,7 +7,7 @@ echo ...
 cat >> /etc/cgconfig.conf <<- EOF
 group memlimit {
     memory {
-        memory.limit_in_bytes = 2147483648;
+        memory.limit_in_bytes = 1073741824;
     }
 }
 EOF
