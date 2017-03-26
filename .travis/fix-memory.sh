@@ -1,9 +1,13 @@
 #run with sudo
-echo "deb https://apt.dockerproject.org/repo ubuntu-precise main" > /etc/apt/sources.list.d/docker.list
+echo ... cgcreate
+cgcreate
+echo ... service cgconfig start
 service cgconfig start
-ls /sys/fs
+echo ... apt-get update -qq
 apt-get update -qq
+echo ... apt-get install cgroup-bin
 apt-get install cgroup-bin
+echo ... 
 cat >> /etc/cgconfig.conf <<- EOF
 group memlimit {
     memory {
