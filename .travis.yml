@@ -19,7 +19,7 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - sudo service rsync stop || true
  - sudo service x11-common stop || true
  - ls -al /var/ramfs
- - fallocate -l 2048M $HOME/swapfile
+ - fallocate -l 4096M $HOME/swapfile
  - mkswap $HOME/swapfile
  - sudo swapon $HOME/swapfile
  - /bin/sync
