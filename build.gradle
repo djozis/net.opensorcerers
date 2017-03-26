@@ -63,7 +63,7 @@ subprojects {
     
     tasks.withType(Test) {
         jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
-        jvmArgs "-Xmx768m"
+        jvmArgs "-Xmx600m"
     }
 
     task q << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
