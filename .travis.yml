@@ -7,6 +7,7 @@ after_success:
  - bash <(curl -s https://codecov.io/bash)
  - ./gradlew coveralls
 cache:
-  directories:
-  - $HOME/.m2 # Speed up dependency resolution
-  - $HOME/.gradle # Speed up dependency resolution
+  directories: # Speed up dependency resolution
+  - $HOME/.m2
+  - $HOME/.gradle
+  - $HOME/.embedmongo
