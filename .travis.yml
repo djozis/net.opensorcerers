@@ -22,8 +22,7 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - fallocate -l 4096M $HOME/swapfile
  - mkswap $HOME/swapfile
  - sudo swapon $HOME/swapfile
- - sudo echo "vm.swappiness = 100" >> /etc/sysctl.conf
- - sudo sysctl -p
+ - sudo sysctl vm.swappiness=100
  - /bin/sync
  - cat /proc/sys/vm/swappiness
  - top -b -n 1
