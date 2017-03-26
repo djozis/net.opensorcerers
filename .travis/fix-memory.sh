@@ -1,4 +1,5 @@
 #run with sudo
+service cgconfig start
 apt-get update
 apt-get install cgroup-bin
 cat >> /etc/cgconfig.conf <<- EOF
