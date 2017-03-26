@@ -1,8 +1,4 @@
 #run with sudo
-echo ... cgcreate
-cgcreate
-echo ... service cgconfig start
-service cgconfig start
 echo ... apt-get update -qq
 apt-get update -qq
 echo ... apt-get install cgroup-bin
@@ -16,4 +12,5 @@ group memlimit {
 }
 EOF
 echo travis memory memlimit/ >> /etc/cgrules.conf
-service cgconfig start
+echo ... service cgconfig restart
+service cgconfig restart
