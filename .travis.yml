@@ -1,7 +1,6 @@
 language: java
 jdk:
   - oraclejdk8
-sudo: true # Required or unit tests seems to fail for some reason?
 before_install: # Travis kills builds using over 3GB of memory - need to conserve!
  - export GRADLE_OPTS="-Xmx128m"
  - top -b -n 1
@@ -19,7 +18,6 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - sudo service rsync stop || true
  - sudo service x11-common stop || true
  - ls -al /var/ramfs
- - sudo rm -rf /var/ramfs/*
  - /bin/sync
  - top -b -n 1
 after_success:
