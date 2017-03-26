@@ -28,8 +28,6 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - top -b -n 1
  - sudo ./.travis/fix-memory.sh
  - ./.travis/debug-memory.sh &
-before_script:
- - sudo cgexec -g memory:memlimit ./gradlew check
 after_success:
  - ./gradlew jacocoTestReport
  - bash <(curl -s https://codecov.io/bash)
