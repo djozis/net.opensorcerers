@@ -1,4 +1,6 @@
-sudo apt-get install libcgroup
+#run with sudo
+
+apt-get install libcgroup
 cat >> /etc/cgconfig.conf <<- EOF
 group memlimit {
     memory {
@@ -6,5 +8,5 @@ group memlimit {
     }
 }
 EOF
-sudo echo travis memory memlimit/ >> /etc/cgrules.conf
-sudo service cgconfig start
+echo travis memory memlimit/ >> /etc/cgrules.conf
+service cgconfig start
