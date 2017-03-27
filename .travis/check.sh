@@ -3,4 +3,7 @@ pwd
 ./gradlew cgroup check &
 CHECK=$!
 disown
-wait $CHECK
+echo "CHECK is $CHECK"
+while kill -0 "$CHECK"; do
+    sleep 1
+done
