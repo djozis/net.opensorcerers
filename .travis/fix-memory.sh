@@ -64,5 +64,7 @@ EOF
 echo travis memory memlimit/ >> /etc/cgrules.conf
 echo ... service cgconfig restart
 service cgconfig restart
+echo ... echo $PPID >> /cgroup/memory/memlimit/tasks
+echo $PPID >> /cgroup/memory/memlimit/tasks
 echo ... top -b -n 1
 top -b -n 1
