@@ -42,8 +42,8 @@ echo ... mkswap $HOME/swapfile
 mkswap $HOME/swapfile
 echo ... sudo swapon $HOME/swapfile
 sudo swapon $HOME/swapfile
-echo ... sudo sysctl vm.swappiness=100
-sudo sysctl vm.swappiness=100
+echo ... sudo sysctl vm.swappiness=60
+sudo sysctl vm.swappiness=60
 echo ... /bin/sync
 /bin/sync
 echo ... cat /proc/sys/vm/swappiness
