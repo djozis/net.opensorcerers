@@ -55,7 +55,7 @@ apt-get install cgroup-bin -qq
 echo
 echo Configuring cgroups
 cat >> /etc/cgconfig.conf <<- EOF
-group memlimit {
+group sysdefault {
     memory {
         memory.limit_in_bytes = 700000000;
     }
