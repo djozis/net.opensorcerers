@@ -60,6 +60,11 @@ group sysdefault {
         memory.limit_in_bytes = 700000000;
     }
 }
+group memlimit {
+    memory {
+        memory.limit_in_bytes = 700000000;
+    }
+}
 EOF
 echo travis memory memlimit/ >> /etc/cgrules.conf
 echo ... service cgconfig restart
