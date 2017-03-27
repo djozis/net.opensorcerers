@@ -119,7 +119,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 
 	def void injectScripts(String... scriptPaths) {
 		ChainReaction.chain [
-			delayTestFinish(10000)
+			delayTestFinish(30000)
 			for (scriptPath : scriptPaths) {
 				// '''/«moduleName».JUnit/«scriptPath»'''
 				ScriptInjector.fromUrl("/" + moduleName + ".JUnit/" + scriptPath).setWindow(
