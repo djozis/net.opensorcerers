@@ -27,6 +27,7 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 
 import static net.opensorcerers.game.server.ApplicationResources.*
+import net.opensorcerers.framework.client.Console
 
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	@Accessors val logger = Logger.getLogger(class.simpleName)
@@ -122,9 +123,11 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 			delayTestFinish(30000)
 			for (scriptPath : scriptPaths) {
 				// '''/«moduleName».JUnit/«scriptPath»'''
+				Console.log("Y: script loading")
 				ScriptInjector.fromUrl("/" + moduleName + ".JUnit/" + scriptPath).setWindow(
 					ScriptInjector.TOP_WINDOW
-				).setCallback(callbackOrTestFailure[println("Y: script loaded")]).inject
+				).setCallback(callbackOrTestFailure[Console.log("Y: script loaded")]).inject
+				Console.log("Y: script inject called")
 			}
 		]
 	}
