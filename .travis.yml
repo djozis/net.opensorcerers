@@ -5,6 +5,7 @@ sudo: true # Required or unit tests seems to fail for some reason?
 before_install: # Travis kills builds using over 3GB of memory - need to conserve!
  - export GRADLE_OPTS="-Xmx128m"
  - sudo ./.travis/fix-memory.sh
+ - ps -o cgroup $$
  - ./.travis/debug-memory.sh &
 after_success:
  - ./gradlew jacocoTestReport
