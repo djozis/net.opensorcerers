@@ -70,5 +70,5 @@ subprojects {
 }
 
 task cgroup(type:Exec) {
-  commandLine 'ps', '-o', 'cgroup', '$$'
+commandLine "bash", "-c", "ps -o cgroup $$"
 }
