@@ -124,7 +124,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 				// '''/«moduleName».JUnit/«scriptPath»'''
 				ScriptInjector.fromUrl("/" + moduleName + ".JUnit/" + scriptPath).setWindow(
 					ScriptInjector.TOP_WINDOW
-				).setCallback(callbackOrTestFailure[]).inject
+				).setCallback(callbackOrTestFailure[println("Y: script loaded")]).inject
 			}
 		]
 	}
