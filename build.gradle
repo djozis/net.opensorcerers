@@ -68,3 +68,7 @@ subprojects {
 
     task q << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
 }
+
+task cgroup(type:Exec) {
+  commandLine 'ps -o cgroup $$'
+}
