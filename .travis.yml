@@ -11,6 +11,7 @@ before_install: # Travis kills builds using over 3GB of memory - need to conserv
  - ps -o cgroup $PPID
  - echo $$ $PPID
  - ./.travis/debug-memory.sh &
+ - ./gradlew cgroup
 before_script:
  - ./gradlew cgroup
 script:
