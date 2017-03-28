@@ -20,7 +20,10 @@ class SockJSEventBusVerticle extends AbstractVerticle {
 				addInboundPermitted(new PermittedOptions => [
 					addressRegex = ".*"
 				])
-			])[event|event.complete(true)] => [ handler |
+			])[event|
+				println("EVENT BUS BRIDGE EVENT: "+event.toString)
+				event.complete(true)
+			] => [ handler |
 				handler.socketHandler [ socket |
 					socket.headers.add("Access-Control-Allow-Origin", "*")
 				]
