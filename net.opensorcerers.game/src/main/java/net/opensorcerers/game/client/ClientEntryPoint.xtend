@@ -54,6 +54,7 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 		Console.log("Entry: 8")
 			eventBus.onConnectionOpened = [Console.log("EVENT BUS OPENED")chainHolder.onSuccess(new ResponseOrError)]
 		Console.log("Entry: 9")
+		Console.log("Entry STATE: "+eventBus.state)
 				
 			ChainReaction.chain [ // TODO: fix this - this shouldn't need to nest.
 			Console.log("Widgetting")

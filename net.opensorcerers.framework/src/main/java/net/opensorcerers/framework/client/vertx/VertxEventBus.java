@@ -22,6 +22,9 @@ public class VertxEventBus {
 	@JsProperty(name = "onclose")
 	public VertxSimpleCallback onConnectionClosed;
 
+	@JsProperty(name = "state")
+	public JavaScriptObject state;
+
 	@JsProperty
 	public JavaScriptObject defaultHeaders;
 }
