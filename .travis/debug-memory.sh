@@ -2,6 +2,6 @@
 while true
 do
     echo
-    top -b -n 1 | head -5 | tail -2 | sed 's/^/        /'
+    top -b -n 1 | head -6 | tail -3 | sed 's/^/        /'
     sleep 5
 done
