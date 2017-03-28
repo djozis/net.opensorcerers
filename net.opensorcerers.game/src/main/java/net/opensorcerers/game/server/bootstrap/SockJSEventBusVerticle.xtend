@@ -21,7 +21,7 @@ class SockJSEventBusVerticle extends AbstractVerticle {
 					addressRegex = ".*"
 				])
 			])[event|
-				println("EVENT BUS BRIDGE EVENT: "+event.type + " - " + event.toString)
+				println("EVENT BUS BRIDGE EVENT: "+event.type + " - " + event.socket + " - " + event.getRawMessage)
 				event.complete(true)
 			] => [ handler |
 				handler.socketHandler [ socket |
