@@ -47,7 +47,14 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 		Console.log("Entry: 6")
 			eventBus.onConnectionClosed = [
 				Console.log("EVENT BUS CLOSED")
+				Console.log(it)
+				Console.log("ENDIT")
 				RootPanel.get.add(new Paragraph => [text = "Event bus closed"])
+			]
+			eventBus.onError = [
+				Console.log("EVENT BUS ERROR")
+				Console.log(it)
+				Console.log("ENDERRORIT")
 			]
 		Console.log("Entry: 7")
 			val chainHolder = ifSuccessful[RootPanel.get.remove(connectingElement)]
