@@ -25,7 +25,7 @@ public class VertxEventBus {
 	public VertxCallback1 onError;
 
 	@JsProperty(name = "state")
-	public JavaScriptObject state;
+	public int state;
 
 	@JsProperty
 	public JavaScriptObject defaultHeaders;
