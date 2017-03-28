@@ -91,6 +91,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 			entryPoint.loginWidget.usernameInput.value = "user1"
 			entryPoint.loginWidget.passwordInput.value = "pass1"
 			entryPoint.loginWidget.submitButton.clickFormSubmit
+			Console.log("TEST: D2")
 		].andThen [
 			Console.log("TEST: E")
 			assertEquals("Login id \"user1\" does not exist", entryPoint.loginWidget.footerText.text)
