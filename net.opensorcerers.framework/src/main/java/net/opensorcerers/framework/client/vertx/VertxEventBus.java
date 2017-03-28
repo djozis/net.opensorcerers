@@ -20,9 +20,9 @@ public class VertxEventBus {
 	@JsProperty(name = "onopen")
 	public VertxSimpleCallback onConnectionOpened;
 	@JsProperty(name = "onclose")
-	public VertxSimpleCallback onConnectionClosed;
+	public VertxCallback1 onConnectionClosed;
 	@JsProperty(name = "onerror")
-	public VertxSimpleCallback onError;
+	public VertxCallback1 onError;
 
 	@JsProperty(name = "state")
 	public JavaScriptObject state;

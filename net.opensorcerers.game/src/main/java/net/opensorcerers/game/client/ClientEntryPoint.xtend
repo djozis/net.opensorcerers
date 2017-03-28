@@ -50,6 +50,8 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 				Console.log(it)
 				Console.log("STRINGED")
 				Console.log(Console.stringify(it))
+				Console.log("REASON")
+				Console.log(Console.reason(it))
 				Console.log("ENDIT")
 				RootPanel.get.add(new Paragraph => [text = "Event bus closed"])
 			]
