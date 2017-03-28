@@ -10,9 +10,12 @@ import static extension net.opensorcerers.util.PasswordHashing.*
 
 @ImplementFrameworkServerService class AuthenticationServiceImpl {
 	override void createAccount(String email, String password, AsyncCallback<Void> callback) {
+		println("TEST SERVER: A")
 		val sessionId = threadLocalSessionId
 		callback.fulfill [
+		println("TEST SERVER: B")
 			val database = ApplicationResources.instance.database
+		println("TEST SERVER: C")
 			val authenticationRecordId = database.authenticationIdPassword.updateOneWhere(
 				[loginId == email],
 				[
@@ -21,23 +24,28 @@ import static extension net.opensorcerers.util.PasswordHashing.*
 				],
 				[upsert(true)]
 			).upsertedId
+		println("TEST SERVER: D")
 			if (authenticationRecordId === null) {
 				throw new IllegalArgumentException('''User id "«email»" is already in use''')
 			}
+		println("TEST SERVER: E")
 
 			val user = database.users.insertOne [
 				alias = new Random().nextInt(100000).toString
 			]
+		println("TEST SERVER: F")
 			database.authenticationIdPassword.updateOneWhere(
 				[loginId == email],
 				[userId = user._id]
 			)
+		println("TEST SERVER: G")
 
 			database.userSessions.updateOneWhere(
 				[it.sessionId == sessionId],
 				[userId = user._id],
 				[upsert(true)]
 			)
+		println("TEST SERVER: H") null
 		]
 	}
 
