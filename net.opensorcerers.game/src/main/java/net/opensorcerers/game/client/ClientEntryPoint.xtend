@@ -25,24 +25,35 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 	def getSessionId() { Cookies.getCookie("JSESSIONID") }
 
 	override onModuleLoad() {
+		Console.log("Entry: 1")
 		ChainReaction.chain [
+		Console.log("Entry: 2")
 			val connectingElement = new Paragraph(
 				"Connecting... if this takes more than a few seconds, there is probably a server error."
 			)
+		Console.log("Entry: 3")
 			RootPanel.get.add(connectingElement)
+		Console.log("Entry: 4")
+		Console.log("Go for: "+"http://" + Window.Location.hostName + ":" + EventBusConstants.port + EventBusConstants.path)
 			eventBus = new VertxEventBus(
 				"http://" + Window.Location.hostName + ":" + EventBusConstants.port + EventBusConstants.path,
 				new Object
 			)
+		Console.log("Entry: 5")
+		Console.log("Entry: ")
 			eventBus.defaultHeaders = #{
 				HeaderConstants.sessionId -> Cookies.getCookie("JSESSIONID")
 			}.toJSO
+		Console.log("Entry: 6")
 			eventBus.onConnectionClosed = [
 				Console.log("EVENT BUS CLOSED")
 				RootPanel.get.add(new Paragraph => [text = "Event bus closed"])
 			]
+		Console.log("Entry: 7")
 			val chainHolder = ifSuccessful[RootPanel.get.remove(connectingElement)]
+		Console.log("Entry: 8")
 			eventBus.onConnectionOpened = [Console.log("EVENT BUS OPENED")chainHolder.onSuccess(new ResponseOrError)]
+		Console.log("Entry: 9")
 				
 			ChainReaction.chain [ // TODO: fix this - this shouldn't need to nest.
 			Console.log("Widgetting")
