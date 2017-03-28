@@ -72,7 +72,7 @@ class ChainReaction implements ChainLinkAPI {
 	static class ChainedCallback<T> implements AsyncCallback<T> {
 		val extension ChainReaction chain
 		val (T)=>void handler
-		var (Throwable)=>void errorHandler = [GWT.log(it.toString)]
+		var (Throwable)=>void errorHandler = [GWT.log("Unhandled error in callback: " + it.message)]
 		var boolean hasBeenCalled
 
 		new(ChainReaction chain, (T)=>void handler) {
