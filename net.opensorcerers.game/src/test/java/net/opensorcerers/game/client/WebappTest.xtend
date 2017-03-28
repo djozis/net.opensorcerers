@@ -6,6 +6,7 @@ import org.junit.Test
 
 import static extension net.opensorcerers.game.client.TestExtensions.*
 import static extension net.opensorcerers.util.PasswordHashing.*
+import net.opensorcerers.framework.client.Console
 
 class WebappTest extends BootstrappingGWTTestCase {
 	override getModuleName() { "net.opensorcerers.game.GameClient" }
@@ -76,31 +77,40 @@ class WebappTest extends BootstrappingGWTTestCase {
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestLogIntoAccount")
 		].andThen [
+			Console.log("TEST: A")
 			injectScripts("webjars/sockjs-client/1.1.2/sockjs.min.js")
 		].andThen [
+			Console.log("TEST: B")
 			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [
+			Console.log("TEST: C")
 			delayTestFinish(30000)
 			entryPoint.onModuleLoad
 		].andThen [
+			Console.log("TEST: D")
 			entryPoint.loginWidget.usernameInput.value = "user1"
 			entryPoint.loginWidget.passwordInput.value = "pass1"
 			entryPoint.loginWidget.submitButton.clickFormSubmit
 		].andThen [
+			Console.log("TEST: E")
 			assertEquals("Login id \"user1\" does not exist", entryPoint.loginWidget.footerText.text)
 			entryPoint.loginWidget.usernameInput.value = "user2"
 			entryPoint.loginWidget.passwordInput.value = "pass1"
 			entryPoint.loginWidget.submitButton.clickFormSubmit
 		].andThen [
+			Console.log("TEST: F")
 			assertEquals("Incorrect password for login id \"user2\"", entryPoint.loginWidget.footerText.text)
 			entryPoint.loginWidget.usernameInput.value = "user2"
 			entryPoint.loginWidget.passwordInput.value = "pass2"
 			entryPoint.loginWidget.submitButton.clickFormSubmit
 		].andThen [
+			Console.log("TEST: G")
 			assertEquals("Log in successful", entryPoint.loginWidget.footerText.text)
 		].andThen [
+			Console.log("TEST: H")
 			postCodeCoverage
 		].andThen [
+			Console.log("TEST: I")
 			finishTest
 		]
 	}
