@@ -17,6 +17,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 
 	@Test def void testCreateAccount() {
 		val entryPoint = new ClientEntryPoint()
+			disableWebsockets
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestCreateAccount")
 		].andThen [
@@ -74,6 +75,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 
 	@Test def void testLogIntoAccount() {
 		val entryPoint = new ClientEntryPoint()
+			disableWebsockets
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestLogIntoAccount")
 		].andThen [
