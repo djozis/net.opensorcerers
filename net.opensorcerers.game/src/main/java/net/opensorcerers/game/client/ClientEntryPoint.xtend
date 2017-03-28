@@ -7,6 +7,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback
 import com.google.gwt.user.client.ui.RootPanel
 import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.framework.shared.HeaderConstants
+import net.opensorcerers.game.client.lib.Console
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.client.services.TestClassProxy
 import net.opensorcerers.game.shared.EventBusConstants
@@ -37,11 +38,14 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 				HeaderConstants.sessionId -> Cookies.getCookie("JSESSIONID")
 			}.toJSO
 			eventBus.onConnectionClosed = [
+				Console.log("EVENT BUS CLOSED")
 				RootPanel.get.add(new Paragraph => [text = "Event bus closed"])
 			]
 			val chainHolder = ifSuccessful[RootPanel.get.remove(connectingElement)]
-			eventBus.onConnectionOpened = [chainHolder.onSuccess(new ResponseOrError)]
+			eventBus.onConnectionOpened = [Console.log("EVENT BUS OPENED")chainHolder.onSuccess(new ResponseOrError)]
+				
 			ChainReaction.chain [ // TODO: fix this - this shouldn't need to nest.
+			Console.log("Widgetting")
 				RootPanel.get.add(loginWidget = new LoginWidget(eventBus) [
 					RootPanel.get.add(new Label("SUCCESS"))
 				])
