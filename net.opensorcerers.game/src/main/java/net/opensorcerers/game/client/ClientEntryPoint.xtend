@@ -17,6 +17,7 @@ import org.gwtbootstrap3.client.ui.Label
 import org.gwtbootstrap3.client.ui.html.Paragraph
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
+import com.google.gwt.user.client.Timer
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	static VertxEventBus eventBus
@@ -49,8 +50,10 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 				eventBus.onConnectionOpened = [
 					Console.log("EVENT BUS OPENED")
 					chainHolder.onSuccess(new ResponseOrError)
-				]
-			}else {
+					([Console.log("0 seconds after EVENT BUS OPENED")] as Timer).schedule(0)
+				]Console.log("Created event bus")
+					([Console.log("0 seconds after Creating event bus")] as Timer).schedule(0)
+			} else {
 				chainHolder.onSuccess(new ResponseOrError)
 			}
 
