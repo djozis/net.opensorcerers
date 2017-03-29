@@ -17,6 +17,8 @@ public class VertxEventBus {
 
 	public native <T> void send(String address, Object message, Object headers, VertxHandler<T> callback);
 
+	public native void close();
+
 	@JsProperty(name = "onopen")
 	public VertxSimpleCallback onConnectionOpened;
 	@JsProperty(name = "onclose")
