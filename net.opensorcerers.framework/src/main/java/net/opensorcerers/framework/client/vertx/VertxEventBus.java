@@ -17,10 +17,17 @@ public class VertxEventBus {
 
 	public native <T> void send(String address, Object message, Object headers, VertxHandler<T> callback);
 
+	public native void close();
+
 	@JsProperty(name = "onopen")
 	public VertxSimpleCallback onConnectionOpened;
 	@JsProperty(name = "onclose")
-	public VertxSimpleCallback onConnectionClosed;
+	public VertxCallback1 onConnectionClosed;
+	@JsProperty(name = "onerror")
+	public VertxCallback1 onError;
+
+	@JsProperty(name = "state")
+	public int state;
 
 	@JsProperty
 	public JavaScriptObject defaultHeaders;

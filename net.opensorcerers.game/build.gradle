@@ -32,7 +32,7 @@ gwt {
     
 	modules 'net.opensorcerers.game.GameClient'
 	
-	maxHeapSize = "1024M"
+	maxHeapSize = "768M"
     
     cacheDir = file("${buildDir}/gwtCache")
 }

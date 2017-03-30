@@ -23,7 +23,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 		].andThen [
 			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [
-			delayTestFinish(30000)
+			delayTestFinish(90000)
 			entryPoint.onModuleLoad
 		].andThen [
 			entryPoint.loginWidget.usernameInput.value = "user"
@@ -80,7 +80,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 		].andThen [
 			injectScripts("webjars/vertx3-eventbus-client/3.4.0/vertx-eventbus.js")
 		].andThen [
-			delayTestFinish(30000)
+			delayTestFinish(90000)
 			entryPoint.onModuleLoad
 		].andThen [
 			entryPoint.loginWidget.usernameInput.value = "user1"
