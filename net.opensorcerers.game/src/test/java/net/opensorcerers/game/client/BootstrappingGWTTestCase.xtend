@@ -27,7 +27,6 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 
 import static net.opensorcerers.game.server.ApplicationResources.*
-import net.opensorcerers.framework.client.Console
 
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	@Accessors val logger = Logger.getLogger(class.simpleName)

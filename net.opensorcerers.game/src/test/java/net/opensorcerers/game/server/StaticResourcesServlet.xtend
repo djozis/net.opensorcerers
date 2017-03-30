@@ -34,27 +34,21 @@ import org.apache.commons.io.IOUtils
 		HttpServletRequest request,
 		HttpServletResponse response
 	) throws ServletException, IOException {
-		println("X: get")
 		val resourcesTopDirectory = request.servletPath.split("/").last
 		var String resourceURI = '''/META-INF/resources/«resourcesTopDirectory»«request.pathInfo»'''
 		logger.log(Level.INFO, '''Webjars resource requested: «resourceURI»''')
 		var InputStream inputStream = class.getResourceAsStream(resourceURI)
-		println("X: getResourceAsStream")
 		if (inputStream !== null) {
-		println("X: not null")
 			if (!disableCache && resourcesTopDirectory == "webjars") {
 				prepareCacheHeaders(response, resourceURI)
 			}
 			var String filename = getFileName(resourceURI)
 			var String mimeType = request.getSession().getServletContext().getMimeType(filename)
 			response.setContentType(if(mimeType !== null) mimeType else "application/octet-stream")
-		println("X: set type")
 			IOUtils.copy(inputStream, response.getOutputStream())
-		println("X: done copy")
 		} else {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND)
 		}
-		println("X: endget")
 	}
 
 	def private String getFileName(String resourceURI) { return resourceURI.split("/").last }
