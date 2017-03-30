@@ -74,4 +74,9 @@ subprojects {
         rename { "quasar-agent.jar" }
     }
     eclipseJdt.dependsOn copyQuasarAgentJar
+    task createXtendGenDirs << {
+        mkdir sourceSets.main.xtendOutputDir
+        mkdir sourceSets.test.xtendOutputDir
+    }
+    eclipseClasspath.dependsOn createXtendGenDirs
 }
