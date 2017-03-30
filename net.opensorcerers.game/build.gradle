@@ -122,3 +122,8 @@ jacocoTestReport {
 }
 apply plugin: 'com.github.kt3k.coveralls'
 tasks.coveralls.dependsOn 'check', 'jacocoTestReport'
+
+task createXtextGenDirs << {
+    mkdir 'src/main/xtext-gen'
+}
+eclipseClasspath.dependsOn createXtextGenDirs
