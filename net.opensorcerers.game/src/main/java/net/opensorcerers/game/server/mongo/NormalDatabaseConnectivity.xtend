@@ -23,11 +23,6 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 			mongodExecutable = MongodStarter.defaultInstance.prepare(getMongoConfiguration)
 		}
 		
-		if (class == NormalDatabaseConnectivity){
-			println("NORMAL DB")
-			new IllegalStateException().printStackTrace
-		}
-
 		mongodExecutable.start
 		client = MongoClients.create("mongodb://localhost:27017")
 		database = client.getDatabase("opensorcerers")

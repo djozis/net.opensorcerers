@@ -67,4 +67,11 @@ subprojects {
     }
 
     task quasarArg << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
+    
+    task copyQuasarAgentJar(type: Copy) {
+        from configurations.quasar.singleFile
+        into "$buildDir/agent"
+        rename { "quasar-agent.jar" }
+    }
+    eclipseJdt.dependsOn copyQuasarAgentJar
 }
