@@ -66,5 +66,5 @@ subprojects {
         jvmArgs "-Xmx1024m"
     }
 
-    task q << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
+    task quasarArg << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
 }
