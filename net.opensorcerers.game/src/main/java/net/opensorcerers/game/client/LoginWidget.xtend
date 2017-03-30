@@ -1,10 +1,7 @@
 package net.opensorcerers.game.client
 
-import com.google.gwt.core.client.GWT
 import com.google.gwt.user.client.ui.Composite
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
-import net.opensorcerers.game.shared.AuthenticationService
-import net.opensorcerers.game.shared.AuthenticationServiceAsync
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.CheckBox
 import org.gwtbootstrap3.client.ui.FieldSet
@@ -24,9 +21,11 @@ import org.gwtbootstrap3.client.ui.constants.InputType
 import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
+import net.opensorcerers.game.client.services.AuthenticationServiceProxy
+import net.opensorcerers.framework.client.vertx.VertxEventBus
 
 @Accessors(PUBLIC_GETTER) class LoginWidget extends Composite {
-	@Accessors(NONE) val AuthenticationServiceAsync authenticationService = GWT.create(AuthenticationService)
+	@Accessors(NONE) val AuthenticationServiceProxy authenticationService
 
 	Text footerText
 	Input usernameInput
@@ -34,7 +33,8 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 	CheckBox createNewAccountCheckbox
 	SubmitButton submitButton
 
-	new((LoginWidget)=>void onSuccessfulAuthentication) {
+	new(VertxEventBus eventBus, (LoginWidget)=>void onSuccessfulAuthentication) {
+		authenticationService = new AuthenticationServiceProxy(eventBus)
 		initWidget(new Panel => [
 			add(new PanelHeader) [
 				add(new Heading(HeadingSize.H3, "Log in"))

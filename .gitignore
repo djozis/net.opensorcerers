@@ -8,6 +8,7 @@ generated/
 xtend-gen/
 xtext-gen/
 www-test/
+net.opensorcerers.game/db/
 .gradle
 .settings
 .classpath

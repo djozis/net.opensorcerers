@@ -1,36 +1,77 @@
 buildscript {
-	repositories {
-		jcenter()
-	}
-	dependencies {
-		classpath 'org.xtext:xtext-gradle-plugin:1.0.15'
-	}
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.xtext:xtext-gradle-plugin:1.0.17'
+    }
 }
 
 subprojects {
-	ext.xtextVersion = '2.11.0'
-	repositories {
-		jcenter()
-	}
-	
-	apply plugin: 'java'
-	apply plugin: 'org.xtext.xtend'
-	apply from: "${rootDir}/gradle/source-layout.gradle"
-	apply from: "${rootDir}/gradle/maven-deployment.gradle"
-	apply plugin: 'eclipse'
-	apply plugin: 'idea'
+    ext.xtextVersion = '2.11.0'
+    ext.gwtVersion = '2.8.0'
+    repositories {
+        jcenter()
+    }
+    
+    apply plugin: 'java'
+    apply plugin: 'org.xtext.xtend'
+    apply from: "${rootDir}/gradle/source-layout.gradle"
+    apply from: "${rootDir}/gradle/maven-deployment.gradle"
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
     
     // UTF-8
     eclipseJdt << { file('.settings/org.eclipse.core.resources.prefs').write('eclipse.preferences.version=1\nencoding/<project>=utf-8') }
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-	
-	group = 'net.opensorcerers.language'
-	version = '1.0.0-SNAPSHOT'
-	
-	sourceCompatibility = '1.8'
-	targetCompatibility = '1.8'
-	
-	configurations.all {
-		exclude group: 'asm'
-	}
+    
+    group = 'net.opensorcerers'
+    version = '1.0.0-SNAPSHOT'
+    
+    ext.quasarClassifier = ':jdk8'
+    ext.quasarVersion = '0.7.7'
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+    
+    configurations.all {
+        exclude group: 'asm'
+    }
+    
+    configurations { quasar }
+    dependencies {
+        compile "co.paralleluniverse:quasar-core:${quasarVersion}${quasarClassifier}"
+        quasar "co.paralleluniverse:quasar-core:${quasarVersion}${quasarClassifier}@jar"
+    }
+    compileJava.dependsOn processResources
+    compileJava {
+        doLast {
+            ant.taskdef(name:'instrumentation', classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.compileOnly).asPath)
+            ant.instrumentation(verbose:'true', check:'true', debug:'true') {
+                fileset(dir: sourceSets.main.output.classesDir)
+            }
+        }
+    }
+    compileTestJava.dependsOn processTestResources
+    compileTestJava {
+        doLast {
+            ant.taskdef(name: 'instrumentation', classname: 'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.testRuntime + configurations.compileOnly).asPath)
+            ant.instrumentation(verbose: 'true', check: 'true', debug: 'true') {
+                fileset(dir: sourceSets.test.output.classesDir, excludes: 'net/opensorcerers/game/client/**')
+            }
+        }
+    }
+    
+    tasks.withType(Test) {
+        jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
+        jvmArgs "-Xmx1024m"
+    }
+
+    task quasarArg << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }
+    
+    task copyQuasarAgentJar(type: Copy) {
+        from configurations.quasar.singleFile
+        into "$buildDir/agent"
+        rename { "quasar-agent.jar" }
+    }
+    eclipseJdt.dependsOn copyQuasarAgentJar
 }

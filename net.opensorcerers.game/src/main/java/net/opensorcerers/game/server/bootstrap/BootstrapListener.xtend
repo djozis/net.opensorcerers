@@ -1,14 +1,12 @@
 package net.opensorcerers.game.server.bootstrap
 
-import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
-import net.opensorcerers.database.bootstrap.MySQLDatabaseConnectivity
 import net.opensorcerers.game.server.ApplicationResources
-import com.google.gwt.core.shared.GWT
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
 import javax.servlet.annotation.WebListener
 
 import static net.opensorcerers.game.server.ApplicationResources.*
+import net.opensorcerers.game.server.mongo.NormalDatabaseConnectivity
 
 @WebListener class BootstrapListener implements ServletContextListener {
 	ApplicationResources createdApplicationResources = null
@@ -20,15 +18,9 @@ import static net.opensorcerers.game.server.ApplicationResources.*
 	}
 
 	def static ApplicationResources createApplicationResources() {
-		if (GWT.isProdMode()) {
-			return new ApplicationResources(
-				new MySQLDatabaseConnectivity
-			)
-		} else {
-			return new ApplicationResources(
-				new H2DatabaseConnectivity
-			)
-		}
+		return new ApplicationResources(
+			new NormalDatabaseConnectivity
+		)
 	}
 
 	override contextDestroyed(ServletContextEvent event) { createdApplicationResources?.close }

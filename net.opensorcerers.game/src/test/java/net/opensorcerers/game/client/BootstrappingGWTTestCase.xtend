@@ -1,5 +1,8 @@
 package net.opensorcerers.game.client
 
+import co.paralleluniverse.fibers.Fiber
+import co.paralleluniverse.strands.SuspendableCallable
+import co.paralleluniverse.strands.SuspendableRunnable
 import com.google.gwt.core.client.Callback
 import com.google.gwt.core.client.GWT
 import com.google.gwt.core.client.ScriptInjector
@@ -11,9 +14,10 @@ import java.util.ArrayList
 import java.util.logging.Logger
 import javax.servlet.annotation.WebServlet
 import net.opensorcerers.coverage.GWTJacocoAdaptor
-import net.opensorcerers.database.bootstrap.H2DatabaseConnectivity
+import net.opensorcerers.game.client.lib.chainreaction.ChainLinkAPI
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
+import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
 import net.opensorcerers.game.shared.ServerSideTestProcessingService
 import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
 import net.opensorcerers.util.ReflectionsBootstrap
@@ -27,11 +31,19 @@ import static net.opensorcerers.game.server.ApplicationResources.*
 abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	@Accessors val logger = Logger.getLogger(class.simpleName)
 
-	@GwtIncompatible protected static val databaseConnectivity = new H2DatabaseConnectivity
+	@GwtIncompatible protected static val databaseConnectivity = new TestDatabaseConnectivity
 
-	@GwtIncompatible boolean needServerInitialization = true
+	@GwtIncompatible def getDatabase() { return ApplicationResources.instance.database }
 
-	@GwtIncompatible def boolean checkInitializeServer() {
+	@GwtIncompatible def inSynchronizedFiber(SuspendableRunnable callback) { new Fiber(callback).start.get }
+
+	@GwtIncompatible def <T> inSynchronizedFiber(SuspendableCallable<T> callback) {
+		return new Fiber(callback).start.get
+	}
+
+	@GwtIncompatible static boolean needServerInitialization = true
+
+	@GwtIncompatible static def boolean checkInitializeServer() {
 		if (needServerInitialization) {
 			needServerInitialization = false
 			if (ApplicationResources.instance !== null) {
@@ -76,6 +88,7 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 	 * Documentation said do not override or call this method. Didn't say anything about doing both.
 	 */
 	@GwtIncompatible override runTest() {
+		checkInitializeServer
 		currentTest = this
 		GWTJacocoAdaptor.setGwtCoveragePaths
 		super.runTest
@@ -104,24 +117,27 @@ abstract class BootstrappingGWTTestCase extends GWTTestCase {
 
 	def callServerMethod(String methodName) { callServerMethod(methodName, #[]) }
 
-	/**
-	 * Exists until release of fix for https://github.com/eclipse/xtext-lib/issues/40
-	 * Marking Deprecated until then.
-	 */
-	@Deprecated def void afterInjectScript(String scriptPath, ()=>void callback) {
-		val path = "" // '''/«moduleName».JUnit/«scriptPath»'''  
-		ScriptInjector.fromUrl(path).setWindow(
-			ScriptInjector.TOP_WINDOW
-		).setCallback(callbackOrTestFailure[callback.apply]).inject
+	def void injectScripts(String... scriptPaths) {
+		ChainReaction.chain [
+			delayTestFinish(30000)
+			for (scriptPath : scriptPaths) {
+				// '''/«moduleName».JUnit/«scriptPath»'''
+				ScriptInjector.fromUrl("/" + moduleName + ".JUnit/" + scriptPath).setWindow(
+					ScriptInjector.TOP_WINDOW
+				).setCallback(callbackOrTestFailure[]).inject
+			}
+		]
 	}
 
-	def static <T, F> Callback<T, F> callbackOrTestFailure((T)=>void handler) {
+	def static <T, F> Callback<T, F> callbackOrTestFailure(ChainLinkAPI chain, (T)=>void handler) {
 		return new Callback<T, F>() {
-			override onSuccess(T result) { handler.apply(result) }
+			val delegate = chain.ifSuccessful(handler).ifFailure[throw it]
+
+			override onSuccess(T result) { delegate.onSuccess(result) }
 
 			override onFailure(F caught) {
 				if (caught instanceof Throwable) {
-					throw caught as Throwable
+					delegate.onFailure(caught)
 				} else {
 					fail(caught.toString)
 				}

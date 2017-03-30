@@ -1,5 +1,10 @@
 package net.opensorcerers.util
 
+import co.paralleluniverse.fibers.Fiber
+import co.paralleluniverse.strands.SuspendableCallable
+import co.paralleluniverse.strands.SuspendableRunnable
+import com.google.gwt.user.client.rpc.AsyncCallback
+
 class Extensions {
 	def static <T extends AutoCloseable> void closeAfter(T it, (T)=>void callback) {
 		var success = false
@@ -39,5 +44,26 @@ class Extensions {
 		} finally {
 			cleanup.apply(it)
 		}
+	}
+
+	def static void fulfill(AsyncCallback<Void> callback, SuspendableRunnable payload) {
+		new Fiber [
+			try {
+				payload.run
+				callback.onSuccess(null)
+			} catch (Throwable e) {
+				callback.onFailure(e)
+			}
+		].start
+	}
+
+	def static <T> void fulfill(AsyncCallback<T> callback, SuspendableCallable<T> payload) {
+		new Fiber [
+			try {
+				callback.onSuccess(payload.run)
+			} catch (Throwable e) {
+				callback.onFailure(e)
+			}
+		].start
 	}
 }
