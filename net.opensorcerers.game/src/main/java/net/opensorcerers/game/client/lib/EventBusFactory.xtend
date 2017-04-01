@@ -1,4 +1,4 @@
-package net.opensorcerers.game.client
+package net.opensorcerers.game.client.lib
 
 import com.google.gwt.user.client.Cookies
 import com.google.gwt.user.client.Timer

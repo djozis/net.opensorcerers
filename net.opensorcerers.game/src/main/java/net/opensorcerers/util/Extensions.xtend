@@ -1,6 +1,8 @@
 package net.opensorcerers.util
 
 import co.paralleluniverse.fibers.Fiber
+import co.paralleluniverse.fibers.Suspendable
+import co.paralleluniverse.strands.SuspendableAction1
 import co.paralleluniverse.strands.SuspendableCallable
 import co.paralleluniverse.strands.SuspendableRunnable
 import com.google.gwt.user.client.rpc.AsyncCallback
@@ -65,5 +67,13 @@ class Extensions {
 				callback.onFailure(e)
 			}
 		].start
+	}
+
+	/**
+	 * Fiber-compatible '=>' replacement.
+	 */
+	@Suspendable def static <T> T withSuspendable(T object, SuspendableAction1<? super T> block) {
+		block.call(object)
+		return object
 	}
 }

@@ -5,6 +5,7 @@ import com.google.gwt.user.client.Cookies
 import com.google.gwt.user.client.ui.RootPanel
 import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.game.client.lib.Console
+import net.opensorcerers.game.client.lib.EventBusFactory
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.shared.ResponseOrError
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -40,7 +41,9 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 				eventBus.onError = [Console.log("Event bus error: " + it)]
 
 				RootPanel.get.add(loginWidget = new LoginWidget(eventBus) [
-					RootPanel.get.add(new Label("SUCCESS"))
+					RootPanel.get.add(new CharacterSelectWidget(eventBus) [
+						RootPanel.get.add(new CharacterWidget(eventBus, it.name))
+					])
 				])
 			]
 		]

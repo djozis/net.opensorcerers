@@ -6,11 +6,15 @@ import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import javax.xml.ws.Holder
+import net.opensorcerers.framework.server.FrameworkServerServiceBase
 import net.opensorcerers.game.server.bootstrap.SockJSEventBusVerticle
 import net.opensorcerers.game.server.database.ApplicationDatabase
 import net.opensorcerers.game.server.database.DatabaseConnectivity
 import net.opensorcerers.game.server.services.AuthenticationServiceImpl
+import net.opensorcerers.util.ReflectionsBootstrap
 import org.eclipse.xtend.lib.annotations.Accessors
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
 
 /**
  * Static fields can be overridden in unit testing.
@@ -23,11 +27,20 @@ class ApplicationResources implements Closeable {
 	val Vertx vertx
 
 	new(DatabaseConnectivity databaseConnectivity) {
+		ReflectionsBootstrap.checkBootstrap
 		this.databaseConnectivity = databaseConnectivity.open
 		this.database = new ApplicationDatabase(databaseConnectivity.database)
 		this.vertx = Vertx.vertx.deployVerticles(
 			new SockJSEventBusVerticle,
 			new AuthenticationServiceImpl
+		).deployVerticles(
+			new Reflections(
+				"net.opensorcerers.game.server.services",
+				ReflectionsBootstrap.urls,
+				new SubTypesScanner
+			).getSubTypesOf(FrameworkServerServiceBase).map [
+				constructor.newInstance
+			]
 		)
 	}
 

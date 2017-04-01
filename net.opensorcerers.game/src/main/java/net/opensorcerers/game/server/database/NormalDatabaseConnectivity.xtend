@@ -24,7 +24,16 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 			mongodExecutable = MongodStarter.defaultInstance.prepare(getMongoConfiguration)
 		}
 
-		mongodExecutable.start
+		try {
+			mongodExecutable.start
+		} catch (IOException e) {
+			// This can happen in dev mode when terminating the server from Ecipse.
+			// The servlet listener doesn't get a chance to clean up the Mongod process.
+			// Try again...
+			if (e.message.contains("Could not start process")) {
+				mongodExecutable.start
+			}
+		}
 		client = MongoClients.create("mongodb://localhost:27017")
 		database = client.getDatabase("opensorcerers")
 

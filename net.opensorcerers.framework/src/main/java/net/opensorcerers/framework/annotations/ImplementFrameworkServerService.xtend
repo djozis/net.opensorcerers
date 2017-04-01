@@ -198,7 +198,7 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 							}
 						«ENDFOR»
 						it.«serviceMethod.simpleName»(
-							«serviceMethod.serviceMethodParameters.map[valueVariableName].join(", ")»,
+							«serviceMethod.serviceMethodParameters.map[valueVariableName + ","].join(" ")»
 							new «resultParameter.type.toString»() {
 								@Override public void onSuccess(«resultParameterCallbackType.toString» «resultVar») {
 									«JsonElement.name» serializedResult;
@@ -289,7 +289,7 @@ class ImplementFrameworkServerServiceProcessor extends AbstractClassProcessor {
 	}
 
 	def static getServiceMethods(ClassDeclaration it) {
-		declaredMethods.filter[visibility == Visibility::PUBLIC].toList
+		declaredMethods.filter[visibility == Visibility::PUBLIC && !static].toList
 	}
 
 	def static getServiceMethodParameters(MethodDeclaration it) {

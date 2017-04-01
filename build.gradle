@@ -47,7 +47,10 @@ subprojects {
         doLast {
             ant.taskdef(name:'instrumentation', classname:'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.compileOnly).asPath)
             ant.instrumentation(verbose:'true', check:'true', debug:'true') {
-                fileset(dir: sourceSets.main.output.classesDir)
+                fileset(dir: sourceSets.main.output.classesDir) {
+                    exclude(name: 'net/opensorcerers/game/client/**')
+                    exclude(name: 'com/google/gwt/json/client/**')
+                }
             }
         }
     }
@@ -56,7 +59,10 @@ subprojects {
         doLast {
             ant.taskdef(name: 'instrumentation', classname: 'co.paralleluniverse.fibers.instrument.InstrumentationTask', classpath: files(configurations.testRuntime + configurations.compileOnly).asPath)
             ant.instrumentation(verbose: 'true', check: 'true', debug: 'true') {
-                fileset(dir: sourceSets.test.output.classesDir, excludes: 'net/opensorcerers/game/client/**')
+                fileset(dir: sourceSets.test.output.classesDir) {
+                    exclude(name: 'net/opensorcerers/game/client/**')
+                    exclude(name: 'com/google/gwt/json/client/**')
+                }
             }
         }
     }

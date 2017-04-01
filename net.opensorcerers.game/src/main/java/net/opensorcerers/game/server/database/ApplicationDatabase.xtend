@@ -8,11 +8,13 @@ import net.opensorcerers.game.server.database.entities.DBUserSession
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionOf
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionsInitializer
 import net.opensorcerers.mongoframework.lib.MongoBeanCodecRegistry
+import net.opensorcerers.game.server.database.entities.DBUserCharacter
 
 class ApplicationDatabase {
 	@MongoBeanCollectionOf DBUser users
 	@MongoBeanCollectionOf DBAuthenticationIdPassword authenticationIdPassword
 	@MongoBeanCollectionOf DBUserSession userSessions
+	@MongoBeanCollectionOf DBUserCharacter userCharacters
 
 	@MongoBeanCollectionsInitializer def void createCollections(MongoDatabase database) {
 		// Filled in by annotation
@@ -27,6 +29,10 @@ class ApplicationDatabase {
 			]
 			authenticationIdPassword.indexes = [
 				createIndex[loginId.ascending].withOptions[unique(true)]
+			]
+			userCharacters.indexes = [
+				createIndex[userId.ascending]
+				createIndex[name.ascending].withOptions[unique(true)]
 			]
 		].start.join
 	}

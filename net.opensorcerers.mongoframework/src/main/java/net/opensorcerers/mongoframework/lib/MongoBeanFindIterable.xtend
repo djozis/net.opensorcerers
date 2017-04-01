@@ -4,9 +4,10 @@ import co.paralleluniverse.fibers.Suspendable
 import com.mongodb.Block
 import com.mongodb.CursorType
 import com.mongodb.async.AsyncBatchCursor
-import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterable
 import java.lang.reflect.Constructor
+import java.util.ArrayList
+import java.util.Collection
 import java.util.concurrent.TimeUnit
 import net.opensorcerers.mongoframework.lib.project.ProjectBeanField
 import net.opensorcerers.mongoframework.lib.project.ProjectStatementList
@@ -54,8 +55,22 @@ import static net.opensorcerers.mongoframework.lib.FiberBlockingSingleResultCall
 	 * @param target   the collection to insert into
 	 * @param <A>      the collection type
 	 */
-	// This currently cannot be implemented correctly. Seems to be a bug somewhere between Xtend and Eclipse.
-	// Calling iterable.into causes the type parsing for the whole class to break.
+	@Suspendable def <A extends Collection<? super T>> A into(A target) {
+		this.forEach[target.add(it)]
+		return target
+	}
+
+	/**
+	 * Iterates over all the documents, adding each to an array list.
+	 * 
+	 * @return the array list
+	 */
+	@Suspendable def ArrayList<T> toArrayList() {
+		val result = new ArrayList<T>
+		this.forEach[result.add(it)]
+		return result
+	}
+
 	/**
 	 * Sets the number of documents to return per batch.
 	 * 
@@ -71,9 +86,7 @@ import static net.opensorcerers.mongoframework.lib.FiberBlockingSingleResultCall
 	/**
 	 * Provide the underlying {@link AsyncBatchCursor} allowing fine grained control of the cursor.
 	 */
-	@Suspendable def void batchCursor(SingleResultCallback<AsyncBatchCursor<T>> callback) {
-		fiberBlockingCallback[iterable.batchCursor(it)].run
-	}
+	@Suspendable def AsyncBatchCursor<T> batchCursor() { return fiberBlockingCallback[iterable.batchCursor(it)].run }
 
 	/**
 	 * Sets the query filter to apply to the query.
