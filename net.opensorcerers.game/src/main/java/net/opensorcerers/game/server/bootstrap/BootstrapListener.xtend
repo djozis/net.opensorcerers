@@ -1,12 +1,12 @@
 package net.opensorcerers.game.server.bootstrap
 
-import net.opensorcerers.game.server.ApplicationResources
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
 import javax.servlet.annotation.WebListener
+import net.opensorcerers.game.server.ApplicationResources
+import net.opensorcerers.game.server.database.NormalDatabaseConnectivity
 
 import static net.opensorcerers.game.server.ApplicationResources.*
-import net.opensorcerers.game.server.mongo.NormalDatabaseConnectivity
 
 @WebListener class BootstrapListener implements ServletContextListener {
 	ApplicationResources createdApplicationResources = null

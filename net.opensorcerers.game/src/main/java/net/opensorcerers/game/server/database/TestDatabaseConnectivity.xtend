@@ -1,4 +1,4 @@
-package net.opensorcerers.game.server.mongo
+package net.opensorcerers.game.server.database
 
 import de.flapdoodle.embed.mongo.config.IMongodConfig
 import de.flapdoodle.embed.mongo.config.MongoCmdOptionsBuilder

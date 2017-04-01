@@ -1,4 +1,4 @@
-package net.opensorcerers.game.server.mongo
+package net.opensorcerers.game.server.database
 
 import com.mongodb.async.client.MongoDatabase
 import java.io.Closeable

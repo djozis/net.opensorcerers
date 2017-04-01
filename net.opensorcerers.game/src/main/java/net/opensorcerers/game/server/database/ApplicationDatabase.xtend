@@ -1,10 +1,10 @@
-package net.opensorcerers.game.server.mongo
+package net.opensorcerers.game.server.database
 
 import co.paralleluniverse.fibers.Fiber
 import com.mongodb.async.client.MongoDatabase
-import net.opensorcerers.database.entities.DBAuthenticationIdPassword
-import net.opensorcerers.database.entities.DBUser
-import net.opensorcerers.database.entities.DBUserSession
+import net.opensorcerers.game.server.database.entities.DBAuthenticationIdPassword
+import net.opensorcerers.game.server.database.entities.DBUser
+import net.opensorcerers.game.server.database.entities.DBUserSession
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionOf
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionsInitializer
 import net.opensorcerers.mongoframework.lib.MongoBeanCodecRegistry

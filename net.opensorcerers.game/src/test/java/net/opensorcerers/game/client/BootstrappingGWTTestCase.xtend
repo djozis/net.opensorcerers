@@ -17,7 +17,7 @@ import net.opensorcerers.coverage.GWTJacocoAdaptor
 import net.opensorcerers.game.client.lib.chainreaction.ChainLinkAPI
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.server.ApplicationResources
-import net.opensorcerers.game.server.mongo.TestDatabaseConnectivity
+import net.opensorcerers.game.server.database.TestDatabaseConnectivity
 import net.opensorcerers.game.shared.ServerSideTestProcessingService
 import net.opensorcerers.game.shared.ServerSideTestProcessingServiceAsync
 import net.opensorcerers.util.ReflectionsBootstrap

@@ -5,7 +5,6 @@ import com.google.gwt.user.client.Timer
 import com.google.gwt.user.client.Window
 import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.framework.shared.HeaderConstants
-import net.opensorcerers.game.client.lib.Console
 import net.opensorcerers.game.shared.EventBusConstants
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*

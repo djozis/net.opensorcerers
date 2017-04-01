@@ -30,6 +30,7 @@ class MongoBeanCollectionOfProcessor extends AbstractFieldProcessor {
 				#[utilsType] + utilsType.declaredSuperTypes.head.actualTypeArguments
 			)
 			declaringType.addMethod('''get«simpleName.toFirstUpper»''') [
+				primarySourceElement = transformingField.primarySourceElement
 				visibility = Visibility.PUBLIC
 				returnType = transformingField.type
 				body = '''return this.«transformingField.simpleName»;'''

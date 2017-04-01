@@ -18,3 +18,5 @@ cache:
   - $HOME/.m2
   - $HOME/.gradle
   - $HOME/.embedmongo
+notifications:
+  email: false

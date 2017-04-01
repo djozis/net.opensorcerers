@@ -43,7 +43,7 @@ import org.apache.commons.io.IOUtils
 				prepareCacheHeaders(response, resourceURI)
 			}
 			var String filename = getFileName(resourceURI)
-			var String mimeType = request.getSession().getServletContext().getMimeType(filename)
+			var String mimeType = request.session.servletContext.getMimeType(filename)
 			response.setContentType(if(mimeType !== null) mimeType else "application/octet-stream")
 			IOUtils.copy(inputStream, response.getOutputStream())
 		} else {

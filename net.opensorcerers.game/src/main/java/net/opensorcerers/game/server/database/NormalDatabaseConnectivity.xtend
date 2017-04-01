@@ -1,4 +1,4 @@
-package net.opensorcerers.game.server.mongo
+package net.opensorcerers.game.server.database
 
 import com.mongodb.async.client.MongoClient
 import com.mongodb.async.client.MongoClients
@@ -18,11 +18,12 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 	var MongodExecutable mongodExecutable = null
 	var MongoClient client
 	@Accessors(PUBLIC_GETTER) var MongoDatabase database
+
 	override open() {
 		if (mongodExecutable === null) {
 			mongodExecutable = MongodStarter.defaultInstance.prepare(getMongoConfiguration)
 		}
-		
+
 		mongodExecutable.start
 		client = MongoClients.create("mongodb://localhost:27017")
 		database = client.getDatabase("opensorcerers")
