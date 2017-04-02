@@ -12,6 +12,8 @@ import net.opensorcerers.game.shared.servicetypes.Action
 import net.opensorcerers.game.shared.servicetypes.UserCharacter
 import net.opensorcerers.util.SuspendableFunction1
 
+import static net.opensorcerers.util.FiberBlockingAsyncCallback.*
+
 import static extension net.opensorcerers.util.Extensions.*
 
 @ImplementFrameworkServerService class CharacterServiceImpl {
@@ -58,24 +60,24 @@ import static extension net.opensorcerers.util.Extensions.*
 				)
 			}
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
-			widgetService.setDisplayText("Hello World", new AsyncCallback<Void> {
-				override onFailure(Throwable caught) {}
-
-				override onSuccess(Void result) {}
-			})
-			widgetService.setAvailableActions(new ArrayList(#[
-				new Action => [
-					it.display = "Do a thing"
-					it.code = "Top secretz"
+			inParallel[
+				addCall[widgetService.setCurrentOutput("Hello World", it)]
+				addCall[
+					widgetService.setAvailableActions(new ArrayList(#[
+						new Action => [
+							it.display = "Do a thing"
+							it.code = "Top secretz"
+						]
+					]), it)
 				]
-			]), callback)
+			]
 		]
 	}
 
 	override void performAction(String characterName, String actionCode, AsyncCallback<Void> callback) {
 		callback.fulfillWithSession [ session |
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
-			widgetService.setDisplayText("Action code: " + actionCode, callback)
+			fiberBlockingCall[widgetService.setCurrentOutput("Action code: " + actionCode, it)]
 		]
 	}
 

@@ -12,6 +12,7 @@ import net.opensorcerers.game.client.services.CharacterServiceProxy
 import net.opensorcerers.game.shared.servicetypes.Action
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
+import org.gwtbootstrap3.client.ui.Button
 import org.gwtbootstrap3.client.ui.ButtonGroup
 import org.gwtbootstrap3.client.ui.Heading
 import org.gwtbootstrap3.client.ui.Panel
@@ -19,10 +20,9 @@ import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.PanelFooter
 import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
-import org.gwtbootstrap3.client.ui.html.Paragraph
+import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
-import org.gwtbootstrap3.client.ui.Button
 
 @ImplementFrameworkClientService @FinalFieldsConstructor class CharacterWidgetServiceImpl {
 	extension val CharacterWidget widget
@@ -46,9 +46,9 @@ import org.gwtbootstrap3.client.ui.Button
 		}
 	}
 
-	override void setDisplayText(String displayText, AsyncCallback<Void> callback) {
+	override void setCurrentOutput(String output, AsyncCallback<Void> callback) {
 		callback.fulfill [
-			displayParagraph.text = displayText
+			displayText.text = output
 		]
 	}
 
@@ -73,7 +73,7 @@ import org.gwtbootstrap3.client.ui.Button
 	val Closeable serviceDetacher
 	val String characterName
 
-	Paragraph displayParagraph
+	Text displayText
 	ButtonGroup actionsButtonGroup
 
 	new(VertxEventBus eventBus, String characterName) {
@@ -85,10 +85,11 @@ import org.gwtbootstrap3.client.ui.Button
 				add(new Heading(HeadingSize.H3, "Playing as: " + characterName))
 			]
 			add(new PanelBody) [
-				add(displayParagraph = new Paragraph("Loading..."))
+				add(displayText = new Text("Loading..."))
+			]
+			add(new PanelFooter) [
 				add(actionsButtonGroup = new ButtonGroup)
 			]
-			add(new PanelFooter)
 		])
 		ChainReaction.chain [
 			characterService.connectCharacter(characterName, ifSuccessful[])
