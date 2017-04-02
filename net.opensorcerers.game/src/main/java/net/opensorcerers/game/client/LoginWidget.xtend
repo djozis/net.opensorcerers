@@ -1,7 +1,9 @@
 package net.opensorcerers.game.client
 
 import com.google.gwt.user.client.ui.Composite
+import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
+import net.opensorcerers.game.client.services.AuthenticationServiceProxy
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.CheckBox
 import org.gwtbootstrap3.client.ui.FieldSet
@@ -15,14 +17,11 @@ import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.PanelFooter
 import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.SubmitButton
-import org.gwtbootstrap3.client.ui.constants.FormType
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.constants.InputType
 import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
-import net.opensorcerers.game.client.services.AuthenticationServiceProxy
-import net.opensorcerers.framework.client.vertx.VertxEventBus
 
 @Accessors(PUBLIC_GETTER) class LoginWidget extends Composite {
 	@Accessors(NONE) val AuthenticationServiceProxy authenticationService
@@ -41,7 +40,6 @@ import net.opensorcerers.framework.client.vertx.VertxEventBus
 			]
 			add(new PanelBody) [
 				add(new Form) [
-					type = FormType.HORIZONTAL
 					add(new FieldSet) [
 						add(new FormGroup) [
 							addLabel(new FormLabel) [

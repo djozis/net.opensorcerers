@@ -20,7 +20,6 @@ import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.PanelFooter
 import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.SubmitButton
-import org.gwtbootstrap3.client.ui.constants.FormType
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.html.Text
 
@@ -61,7 +60,6 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 			add(new PanelBody) [
 				add(new Text("Create new character"))
 				add(new Form) [
-					type = FormType.HORIZONTAL
 					add(new FieldSet) [
 						add(new FormGroup) [
 							addLabel(new FormLabel) [

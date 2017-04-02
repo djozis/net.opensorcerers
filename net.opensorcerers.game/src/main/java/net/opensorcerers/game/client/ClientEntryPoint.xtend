@@ -9,7 +9,7 @@ import net.opensorcerers.game.client.lib.EventBusFactory
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.shared.ResponseOrError
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.gwtbootstrap3.client.ui.Label
+import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.html.Paragraph
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
@@ -17,6 +17,8 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 	LoginWidget loginWidget
 
 	def getSessionId() { Cookies.getCookie("JSESSIONID") }
+
+	PanelBody mainDiv
 
 	override onModuleLoad() {
 		ChainReaction.chain [
@@ -40,9 +42,11 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 				]
 				eventBus.onError = [Console.log("Event bus error: " + it)]
 
-				RootPanel.get.add(loginWidget = new LoginWidget(eventBus) [
-					RootPanel.get.add(new CharacterSelectWidget(eventBus) [
-						RootPanel.get.add(new CharacterWidget(eventBus, it.name))
+				RootPanel.get.add(mainDiv = new PanelBody)
+
+				mainDiv.add(loginWidget = new LoginWidget(eventBus) [
+					mainDiv.add(new CharacterSelectWidget(eventBus) [
+						mainDiv.add(new CharacterWidget(eventBus, it.name))
 					])
 				])
 			]
