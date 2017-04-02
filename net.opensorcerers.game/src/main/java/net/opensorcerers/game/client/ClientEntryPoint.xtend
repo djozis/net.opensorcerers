@@ -10,15 +10,19 @@ import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.shared.ResponseOrError
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.gwtbootstrap3.client.ui.PanelBody
+import org.gwtbootstrap3.client.ui.PanelGroup
 import org.gwtbootstrap3.client.ui.html.Paragraph
+
+import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
 @Accessors(PUBLIC_GETTER) class ClientEntryPoint implements EntryPoint {
 	static VertxEventBus eventBus = null
 	LoginWidget loginWidget
+	CharacterSelectWidget characterSelectWidget
 
 	def getSessionId() { Cookies.getCookie("JSESSIONID") }
 
-	PanelBody mainDiv
+	PanelGroup mainPanelGroup
 
 	override onModuleLoad() {
 		ChainReaction.chain [
@@ -42,13 +46,24 @@ import org.gwtbootstrap3.client.ui.html.Paragraph
 				]
 				eventBus.onError = [Console.log("Event bus error: " + it)]
 
-				RootPanel.get.add(mainDiv = new PanelBody)
+				RootPanel.get.add(new PanelBody) [
+					add(mainPanelGroup = new PanelGroup) [
+						id = generateId
+					]
+				]
 
-				mainDiv.add(loginWidget = new LoginWidget(eventBus) [
-					mainDiv.add(new CharacterSelectWidget(eventBus) [
-						mainDiv.add(new CharacterWidget(eventBus, it.name))
-					])
+				mainPanelGroup.add(loginWidget = new LoginWidget(eventBus) [
+					loginWidget.open = false
+					characterSelectWidget = new CharacterSelectWidget(eventBus) [
+						characterSelectWidget.open = false
+						val characterWidget = new CharacterWidget(eventBus, it.name)
+						mainPanelGroup.add(characterWidget)
+						characterWidget.open = true
+					]
+					mainPanelGroup.add(characterSelectWidget)
+					characterSelectWidget.open = true
 				])
+				loginWidget.open = true
 			]
 		]
 	}

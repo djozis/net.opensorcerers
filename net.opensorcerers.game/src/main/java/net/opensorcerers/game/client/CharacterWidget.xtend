@@ -1,12 +1,12 @@
 package net.opensorcerers.game.client
 
 import com.google.gwt.user.client.rpc.AsyncCallback
-import com.google.gwt.user.client.ui.Composite
 import java.io.Closeable
 import java.io.IOException
 import java.util.ArrayList
 import net.opensorcerers.framework.annotations.ImplementFrameworkClientService
 import net.opensorcerers.framework.client.vertx.VertxEventBus
+import net.opensorcerers.game.client.lib.CollapsiblePanel
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.client.services.CharacterServiceProxy
 import net.opensorcerers.game.shared.servicetypes.Action
@@ -15,10 +15,8 @@ import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.gwtbootstrap3.client.ui.Button
 import org.gwtbootstrap3.client.ui.ButtonGroup
 import org.gwtbootstrap3.client.ui.Heading
-import org.gwtbootstrap3.client.ui.Panel
 import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.PanelFooter
-import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.html.Text
 
@@ -68,7 +66,7 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 	}
 }
 
-@Accessors class CharacterWidget extends Composite implements Closeable {
+@Accessors class CharacterWidget extends CollapsiblePanel implements Closeable {
 	@Accessors(PACKAGE_GETTER) val CharacterServiceProxy characterService
 	val Closeable serviceDetacher
 	val String characterName
@@ -80,17 +78,15 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 		this.characterName = characterName
 		this.characterService = new CharacterServiceProxy(eventBus)
 		this.serviceDetacher = new CharacterWidgetServiceImpl(this).addToEventBus(eventBus)
-		initWidget(new Panel => [
-			add(new PanelHeader) [
-				add(new Heading(HeadingSize.H3, "Playing as: " + characterName))
-			]
+		getHeaderPanel.add(new Heading(HeadingSize.H3, "Playing as: " + characterName))
+		getCollapsePanel => [
 			add(new PanelBody) [
 				add(displayText = new Text("Loading..."))
 			]
 			add(new PanelFooter) [
 				add(actionsButtonGroup = new ButtonGroup)
 			]
-		])
+		]
 		ChainReaction.chain [
 			characterService.connectCharacter(characterName, ifSuccessful[])
 		]

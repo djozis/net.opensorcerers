@@ -1,8 +1,8 @@
 package net.opensorcerers.game.client
 
-import com.google.gwt.user.client.ui.Composite
 import java.util.ArrayList
 import net.opensorcerers.framework.client.vertx.VertxEventBus
+import net.opensorcerers.game.client.lib.CollapsiblePanel
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.client.services.CharacterServiceProxy
 import net.opensorcerers.game.shared.servicetypes.UserCharacter
@@ -15,17 +15,14 @@ import org.gwtbootstrap3.client.ui.FormGroup
 import org.gwtbootstrap3.client.ui.FormLabel
 import org.gwtbootstrap3.client.ui.Heading
 import org.gwtbootstrap3.client.ui.Input
-import org.gwtbootstrap3.client.ui.Panel
 import org.gwtbootstrap3.client.ui.PanelBody
-import org.gwtbootstrap3.client.ui.PanelFooter
-import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.SubmitButton
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
-@Accessors class CharacterSelectWidget extends Composite {
+@Accessors class CharacterSelectWidget extends CollapsiblePanel {
 	@Accessors(NONE) val CharacterServiceProxy characterService
 	@Accessors(NONE) val (UserCharacter)=>void selectionCallback
 
@@ -50,10 +47,8 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 	new(VertxEventBus eventBus, (UserCharacter)=>void selectionCallback) {
 		this.characterService = new CharacterServiceProxy(eventBus)
 		this.selectionCallback = selectionCallback
-		initWidget(new Panel => [
-			add(new PanelHeader) [
-				add(new Heading(HeadingSize.H3, "Select Character"))
-			]
+		getHeaderPanel.add(new Heading(HeadingSize.H3, "Select Character"))
+		getCollapsePanel.add(new PanelBody) [
 			add(charactersBody = new PanelBody) [
 				add(new Text("Characters not yet found..."))
 			]
@@ -84,8 +79,7 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 					]
 				]
 			]
-			add(new PanelFooter)
-		])
+		]
 		ChainReaction.chain [
 			characterService.listCharacters(ifSuccessful[ characters |
 				this.characters = characters

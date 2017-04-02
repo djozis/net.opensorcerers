@@ -1,7 +1,7 @@
 package net.opensorcerers.game.client
 
-import com.google.gwt.user.client.ui.Composite
 import net.opensorcerers.framework.client.vertx.VertxEventBus
+import net.opensorcerers.game.client.lib.CollapsiblePanel
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.client.services.AuthenticationServiceProxy
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -12,10 +12,8 @@ import org.gwtbootstrap3.client.ui.FormGroup
 import org.gwtbootstrap3.client.ui.FormLabel
 import org.gwtbootstrap3.client.ui.Heading
 import org.gwtbootstrap3.client.ui.Input
-import org.gwtbootstrap3.client.ui.Panel
 import org.gwtbootstrap3.client.ui.PanelBody
 import org.gwtbootstrap3.client.ui.PanelFooter
-import org.gwtbootstrap3.client.ui.PanelHeader
 import org.gwtbootstrap3.client.ui.SubmitButton
 import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.constants.InputType
@@ -23,7 +21,7 @@ import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
-@Accessors(PUBLIC_GETTER) class LoginWidget extends Composite {
+@Accessors(PUBLIC_GETTER) class LoginWidget extends CollapsiblePanel {
 	@Accessors(NONE) val AuthenticationServiceProxy authenticationService
 
 	Text footerText
@@ -34,10 +32,8 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 
 	new(VertxEventBus eventBus, (LoginWidget)=>void onSuccessfulAuthentication) {
 		authenticationService = new AuthenticationServiceProxy(eventBus)
-		initWidget(new Panel => [
-			add(new PanelHeader) [
-				add(new Heading(HeadingSize.H3, "Log in"))
-			]
+		getHeaderPanel.add(new Heading(HeadingSize.H3, "Log in"))
+		getCollapsePanel => [
 			add(new PanelBody) [
 				add(new Form) [
 					add(new FieldSet) [
@@ -102,6 +98,6 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 			add(new PanelFooter) [
 				add(footerText = new Text)
 			]
-		])
+		]
 	}
 }

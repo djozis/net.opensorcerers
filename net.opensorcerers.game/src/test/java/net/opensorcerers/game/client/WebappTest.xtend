@@ -6,6 +6,7 @@ import org.junit.Test
 
 import static extension net.opensorcerers.game.client.TestExtensions.*
 import static extension net.opensorcerers.util.PasswordHashing.*
+import net.opensorcerers.game.client.lib.CollapsiblePanel
 
 class WebappTest extends BootstrappingGWTTestCase {
 	override getModuleName() { "net.opensorcerers.game.GameClient" }
@@ -15,6 +16,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 	}
 
 	@Test def void testCreateAccount() {
+		CollapsiblePanel.collapsingEnabled = false
 		val entryPoint = new ClientEntryPoint()
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestCreateAccount")
@@ -72,6 +74,7 @@ class WebappTest extends BootstrappingGWTTestCase {
 	}
 
 	@Test def void testLogIntoAccount() {
+		CollapsiblePanel.collapsingEnabled = false
 		val entryPoint = new ClientEntryPoint()
 		ChainReaction.chain [
 			callServerMethod("serverSetupTestLogIntoAccount")
