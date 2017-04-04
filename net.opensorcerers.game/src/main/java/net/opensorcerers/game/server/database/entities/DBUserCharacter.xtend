@@ -7,4 +7,5 @@ import org.eclipse.xtend.lib.annotations.Accessors
 @ImplementMongoBean @Accessors class DBUserCharacter {
 	BsonObjectId userId
 	String name
+	String position
 }

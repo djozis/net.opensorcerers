@@ -10,6 +10,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 import static extension org.bson.codecs.BsonValueCodecProvider.*
+import org.bson.BsonNull
 
 @FinalFieldsConstructor class FilterExpressionCodec implements Codec<FilterExpression> {
 	val CodecRegistry codecRegistry
@@ -32,8 +33,14 @@ import static extension org.bson.codecs.BsonValueCodecProvider.*
 			}
 			writer.writeEndArray
 		} else {
+			println(codecRegistry)
+			println(expressionValue			)
+			println(expressionValue?.class)
+			println(expressionValue?.class ?: BsonNull)
+			println(codecRegistry.get(expressionValue?.class ?: BsonNull))
+			println(codecRegistry.get(expressionValue?.class ?: BsonNull) as Codec<Object>)
 			encoderContext.encodeWithChildContext(
-				codecRegistry.get(expressionValue.class) as Codec<Object>,
+				codecRegistry.get(expressionValue?.class ?: BsonNull) as Codec<Object>,
 				writer,
 				expressionValue
 			)

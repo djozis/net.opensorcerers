@@ -1,14 +1,15 @@
 package net.opensorcerers.game.server.services
 
 import co.paralleluniverse.fibers.Fiber
+import co.paralleluniverse.fibers.Suspendable
 import co.paralleluniverse.strands.SuspendableAction1
 import com.google.gwt.user.client.rpc.AsyncCallback
 import java.util.ArrayList
 import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.server.CharacterWidgetServiceProxy
+import net.opensorcerers.game.server.content.places.PlaceProvider
 import net.opensorcerers.game.server.database.entities.DBUserSession
-import net.opensorcerers.game.shared.servicetypes.Action
 import net.opensorcerers.game.shared.servicetypes.UserCharacter
 import net.opensorcerers.util.SuspendableFunction1
 
@@ -50,35 +51,66 @@ import static extension net.opensorcerers.util.Extensions.*
 
 	override void connectCharacter(String characterName, AsyncCallback<Void> callback) {
 		callback.fulfillWithSession [ session |
-			val database = ApplicationResources.instance.database
-			val dbCharacter = database.userCharacters.findWhere [
-				it.userId == session.userId && it.name == characterName
-			].first
-			if (dbCharacter === null) {
-				throw new IllegalArgumentException(
-					'''Could not find character with name "«characterName»" under your account.'''
-				)
-			}
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
+			val character = findCharacterOrError(session, characterName)
+			if (character.position === null) {
+				character.position = PlaceProvider.INSTANCE.defaultPosition
+			}
+			val place = PlaceProvider.INSTANCE.getPlace(character.position)
 			inParallel[
-				addCall[widgetService.setCurrentOutput("Hello World", it)]
-				addCall[
-					widgetService.setAvailableActions(new ArrayList(#[
-						new Action => [
-							it.display = "Do a thing"
-							it.code = "Top secretz"
-						]
-					]), it)
-				]
+				addCall[widgetService.setCurrentOutput(place.getDescription(character), it)]
+				addCall[widgetService.setAvailableActions(place.getActions(character), it)]
 			]
 		]
 	}
 
 	override void performAction(String characterName, String actionCode, AsyncCallback<Void> callback) {
 		callback.fulfillWithSession [ session |
+			val database = ApplicationResources.instance.database
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
-			fiberBlockingCall[widgetService.setCurrentOutput("Action code: " + actionCode, it)]
+			val character = findCharacterOrError(session, characterName)
+			switch actionCode.split(":").head {
+				case "move": {
+					val oldPosition = PlaceProvider.INSTANCE.getPlace(
+						character.position ?: PlaceProvider.INSTANCE.defaultPosition
+					)
+					if (oldPosition.getActions(character).map[code].contains(actionCode)) {
+						val newPosition = actionCode.substring(actionCode.indexOf(":") + 1)
+						if (database.userCharacters.updateOneWhere([
+							it._id == character._id && it.position == character.position
+						]) [
+							it.position = newPosition
+						].modifiedCount > 0) {
+							val newPlace = PlaceProvider.INSTANCE.getPlace(newPosition)
+							fiberBlockingCall[widgetService.setCurrentOutput(newPlace.getDescription(character), it)]
+							fiberBlockingCall[widgetService.setAvailableActions(newPlace.getActions(character), it)]
+						} else {
+							fiberBlockingCall[
+								widgetService.setCurrentOutput('''Character was no longer at: «character.position»''',
+									it)
+							]
+						}
+					} else {
+						fiberBlockingCall[widgetService.setCurrentOutput('''Illegal action: «actionCode»''', it)]
+					}
+				}
+				default:
+					fiberBlockingCall[widgetService.setCurrentOutput("Unknown action: " + actionCode, it)]
+			}
 		]
+	}
+
+	@Suspendable protected def findCharacterOrError(DBUserSession session, String characterName) {
+		val database = ApplicationResources.instance.database
+		val dbCharacter = database.userCharacters.findWhere [
+			it.userId == session.userId && it.name == characterName
+		].first
+		if (dbCharacter === null) {
+			throw new IllegalArgumentException(
+				'''Could not find character with name "«characterName»" under your account.'''
+			)
+		}
+		return dbCharacter
 	}
 
 	protected def void fulfillWithSession(
@@ -121,6 +153,7 @@ import static extension net.opensorcerers.util.Extensions.*
 				}
 				callback.onSuccess(payload.apply(session))
 			} catch (Throwable e) {
+				e.printStackTrace
 				callback.onFailure(e)
 			}
 		].start
