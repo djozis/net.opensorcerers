@@ -1,7 +1,6 @@
 package net.opensorcerers.game.server.content.places
 
-import java.util.ArrayList
-import net.opensorcerers.game.shared.servicetypes.Action
+import net.opensorcerers.game.server.database.entities.DBUserCharacter
 
 class PlaceProvider {
 	public static val PlaceProvider INSTANCE = new PlaceProvider
@@ -12,20 +11,35 @@ class PlaceProvider {
 	def getDefaultPosition() { return "0:0:0" }
 
 	def Place getPlace(String position) {
-		return new StaticPlace => [
-			description = '''You are at «position»'''
-			actions = new ArrayList
-			if (position == "0:0:0") {
-				actions.add(new Action => [
-					display = '''Go to 0:0:1'''
-					code = '''move:0:0:1'''
-				])
-			} else if (position == "0:0:1") {
-				actions.add(new Action => [
-					display = '''Go to 0:0:0'''
-					code = '''move:0:0:0'''
-				])
-			}
-		]
+		switch position {
+			case "0:0:0":
+				return new BasePlace {
+					override createCommandsList() {
+						return #[
+							new BasePlace.PlaceCommand("Go up the hill", new BasePlace.MovementAction("0:0:1"))
+						]
+					}
+
+					override getId() '''0:0:0'''
+
+					override getDescription(DBUserCharacter character) '''
+						You stand in an open field. You can see a hill.
+					'''
+				}
+			case "0:0:1":
+				return new BasePlace {
+					override createCommandsList() {
+						return #[
+							new BasePlace.PlaceCommand("Go down the hill", new BasePlace.MovementAction("0:0:0"))
+						]
+					}
+
+					override getId() '''0:0:1'''
+
+					override getDescription(DBUserCharacter character) '''
+						You on the top of a hill. You can see a field.
+					'''
+				}
+		}
 	}
 }

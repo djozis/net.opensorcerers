@@ -33,12 +33,6 @@ import org.bson.BsonNull
 			}
 			writer.writeEndArray
 		} else {
-			println(codecRegistry)
-			println(expressionValue			)
-			println(expressionValue?.class)
-			println(expressionValue?.class ?: BsonNull)
-			println(codecRegistry.get(expressionValue?.class ?: BsonNull))
-			println(codecRegistry.get(expressionValue?.class ?: BsonNull) as Codec<Object>)
 			encoderContext.encodeWithChildContext(
 				codecRegistry.get(expressionValue?.class ?: BsonNull) as Codec<Object>,
 				writer,

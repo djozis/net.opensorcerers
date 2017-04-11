@@ -9,7 +9,6 @@ import net.opensorcerers.framework.client.vertx.VertxEventBus
 import net.opensorcerers.game.client.lib.CollapsiblePanel
 import net.opensorcerers.game.client.lib.chainreaction.ChainReaction
 import net.opensorcerers.game.client.services.CharacterServiceProxy
-import net.opensorcerers.game.shared.servicetypes.Action
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 import org.gwtbootstrap3.client.ui.Button
@@ -21,6 +20,7 @@ import org.gwtbootstrap3.client.ui.constants.HeadingSize
 import org.gwtbootstrap3.client.ui.html.Text
 
 import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
+import net.opensorcerers.game.shared.servicetypes.AvailableCommand
 
 @ImplementFrameworkClientService @FinalFieldsConstructor class CharacterWidgetServiceImpl {
 	extension val CharacterWidget widget
@@ -50,14 +50,14 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 		]
 	}
 
-	override void setAvailableActions(ArrayList<Action> availableActions, AsyncCallback<Void> callback) {
+	override void setAvailablePlaceCommands(ArrayList<AvailableCommand> availablePlaceCommands, AsyncCallback<Void> callback) {
 		callback.fulfill [
-			actionsButtonGroup.clear
-			for (action : availableActions) {
-				actionsButtonGroup.add(new Button(action.display)) [
+			placeBasedCommandsButtonGroup.clear
+			for (action : availablePlaceCommands) {
+				placeBasedCommandsButtonGroup.add(new Button(action.description)) [
 					addClickHandler[ event |
 						ChainReaction.chain [
-							characterService.performAction(characterName, action.code, ifSuccessful[])
+							characterService.performPlaceCommand(characterName, action.code, ifSuccessful[])
 						]
 					]
 				]
@@ -72,7 +72,7 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 	val String characterName
 
 	Text displayText
-	ButtonGroup actionsButtonGroup
+	ButtonGroup placeBasedCommandsButtonGroup
 
 	new(VertxEventBus eventBus, String characterName) {
 		this.characterName = characterName
@@ -84,7 +84,8 @@ import static extension net.opensorcerers.game.client.lib.ClientExtensions.*
 				add(displayText = new Text("Loading..."))
 			]
 			add(new PanelFooter) [
-				add(actionsButtonGroup = new ButtonGroup)
+				add(new Text("Place based commands"))
+				add(placeBasedCommandsButtonGroup = new ButtonGroup)
 			]
 		]
 		ChainReaction.chain [

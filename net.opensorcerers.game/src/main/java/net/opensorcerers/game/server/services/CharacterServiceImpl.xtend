@@ -8,6 +8,7 @@ import java.util.ArrayList
 import net.opensorcerers.framework.annotations.ImplementFrameworkServerService
 import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.server.CharacterWidgetServiceProxy
+import net.opensorcerers.game.server.ClientServiceProxyFactory
 import net.opensorcerers.game.server.content.places.PlaceProvider
 import net.opensorcerers.game.server.database.entities.DBUserSession
 import net.opensorcerers.game.shared.servicetypes.UserCharacter
@@ -59,43 +60,24 @@ import static extension net.opensorcerers.util.Extensions.*
 			val place = PlaceProvider.INSTANCE.getPlace(character.position)
 			inParallel[
 				addCall[widgetService.setCurrentOutput(place.getDescription(character), it)]
-				addCall[widgetService.setAvailableActions(place.getActions(character), it)]
+				addCall[widgetService.setAvailablePlaceCommands(place.getAvailableCommands(character), it)]
 			]
 		]
 	}
 
-	override void performAction(String characterName, String actionCode, AsyncCallback<Void> callback) {
+	override void performPlaceCommand(String characterName, String commandCode, AsyncCallback<Void> callback) {
 		callback.fulfillWithSession [ session |
-			val database = ApplicationResources.instance.database
-			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
 			val character = findCharacterOrError(session, characterName)
-			switch actionCode.split(":").head {
-				case "move": {
-					val oldPosition = PlaceProvider.INSTANCE.getPlace(
-						character.position ?: PlaceProvider.INSTANCE.defaultPosition
-					)
-					if (oldPosition.getActions(character).map[code].contains(actionCode)) {
-						val newPosition = actionCode.substring(actionCode.indexOf(":") + 1)
-						if (database.userCharacters.updateOneWhere([
-							it._id == character._id && it.position == character.position
-						]) [
-							it.position = newPosition
-						].modifiedCount > 0) {
-							val newPlace = PlaceProvider.INSTANCE.getPlace(newPosition)
-							fiberBlockingCall[widgetService.setCurrentOutput(newPlace.getDescription(character), it)]
-							fiberBlockingCall[widgetService.setAvailableActions(newPlace.getActions(character), it)]
-						} else {
-							fiberBlockingCall[
-								widgetService.setCurrentOutput('''Character was no longer at: «character.position»''',
-									it)
-							]
-						}
-					} else {
-						fiberBlockingCall[widgetService.setCurrentOutput('''Illegal action: «actionCode»''', it)]
-					}
-				}
-				default:
-					fiberBlockingCall[widgetService.setCurrentOutput("Unknown action: " + actionCode, it)]
+			val position = character.position ?: PlaceProvider.INSTANCE.defaultPosition
+			val place = PlaceProvider.INSTANCE.getPlace(position)
+			if (place !== null) {
+				place.performCommand(
+					new ClientServiceProxyFactory(vertx.eventBus, session.sessionId),
+					character,
+					commandCode
+				)
+			} else {
+				throw new IllegalStateException('''Character "«character.name»" is in null place at "«position»"''')
 			}
 		]
 	}
@@ -131,6 +113,7 @@ import static extension net.opensorcerers.util.Extensions.*
 				payload.call(session)
 				callback.onSuccess(null)
 			} catch (Throwable e) {
+				e.printStackTrace // TODO: remove outside of debug
 				callback.onFailure(e)
 			}
 		].start
@@ -138,7 +121,7 @@ import static extension net.opensorcerers.util.Extensions.*
 
 	protected def <T> void fulfillWithSession(
 		AsyncCallback<T> callback,
-		SuspendableFunction1<T, DBUserSession> payload
+		SuspendableFunction1<DBUserSession, T> payload
 	) {
 		val sessionId = threadLocalSessionId
 		new Fiber [
