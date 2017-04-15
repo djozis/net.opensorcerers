@@ -70,6 +70,7 @@ subprojects {
     tasks.withType(Test) {
         jvmArgs "-javaagent:${configurations.quasar.singleFile}" // =v, =d
         jvmArgs "-Xmx1024m"
+        jvmArgs "-Djava.io.tmpdir=build/tmp" // Use the build/tmp directory instead of filling up the user's temp directory
     }
 
     task quasarArg << { println "-javaagent:" + configurations.quasar.singleFile.path.replace("\\", "/") }

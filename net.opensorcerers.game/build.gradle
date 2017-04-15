@@ -33,12 +33,13 @@ apply plugin: 'war'
 apply plugin: 'gwt'
 gwt {
 	gwtVersion = project.gwtVersion
+	maxHeapSize = "768M"
+    cacheDir = file("${buildDir}/gwtCache")
     
 	modules 'net.opensorcerers.game.GameClient'
-	
-	maxHeapSize = "768M"
-    
-    cacheDir = file("${buildDir}/gwtCache")
+}
+tasks.withType(de.richsource.gradle.plugins.gwt.AbstractGwtActionTask) {
+    jvmArgs "-Djava.io.tmpdir=build/tmp" // Use the build/tmp directory instead of filling up the user's temp directory
 }
 clean.delete 'war'
 

@@ -33,6 +33,7 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 					new ExtractedArtifactStoreBuilder => [
 						defaults(command)
 						tempDir(new PlatformTempDir {
+							// This override fixes relatives tmpdir paths showing up twice in executable path
 							override File asFile() { return super.asFile.absoluteFile }
 						})
 					]
