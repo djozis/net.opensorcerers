@@ -17,6 +17,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.DevMode"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-port 8888 -war war -remoteUI &quot;${gwt_remote_ui_server_port}:${unique_id}&quot; -startupUrl index.html -logLevel INFO -codeServerPort 9997 net.opensorcerers.game.GameClient"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="net.opensorcerers.game"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m -javaagent:build/agent/quasar-agent.jar"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m -javaagent:build/agent/quasar-agent.jar -Dco.paralleluniverse.fibers.verifyInstrumentation -Djava.io.tmpdir=build/tmp"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:net.opensorcerers.game}"/>
 </launchConfiguration>

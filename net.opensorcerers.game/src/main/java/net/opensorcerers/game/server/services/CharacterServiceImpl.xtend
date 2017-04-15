@@ -54,10 +54,7 @@ import static extension net.opensorcerers.util.Extensions.*
 		callback.fulfillWithSession [ session |
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
 			val character = findCharacterOrError(session, characterName)
-			if (character.position === null) {
-				character.position = PlaceProvider.INSTANCE.defaultPosition
-			}
-			val place = PlaceProvider.INSTANCE.getPlace(character.position)
+			val place = PlaceProvider.INSTANCE.getPlace(character)
 			inParallel[
 				addCall[widgetService.setCurrentOutput(place.getDescription(character), it)]
 				addCall[widgetService.setAvailablePlaceCommands(place.getAvailableCommands(character), it)]
@@ -68,8 +65,7 @@ import static extension net.opensorcerers.util.Extensions.*
 	override void performPlaceCommand(String characterName, String commandCode, AsyncCallback<Void> callback) {
 		callback.fulfillWithSession [ session |
 			val character = findCharacterOrError(session, characterName)
-			val position = character.position ?: PlaceProvider.INSTANCE.defaultPosition
-			val place = PlaceProvider.INSTANCE.getPlace(position)
+			val place = PlaceProvider.INSTANCE.getPlace(character)
 			if (place !== null) {
 				place.performCommand(
 					new ClientServiceProxyFactory(vertx.eventBus, session.sessionId),
@@ -77,7 +73,7 @@ import static extension net.opensorcerers.util.Extensions.*
 					commandCode
 				)
 			} else {
-				throw new IllegalStateException('''Character "«character.name»" is in null place at "«position»"''')
+				throw new IllegalStateException('''Character "«character.name»" is in null place at "«character.position»"''')
 			}
 		]
 	}

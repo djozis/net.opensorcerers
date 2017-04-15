@@ -20,5 +20,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="com.google.gwt.eclipse.core.moduleClasspathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value=""/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="net.opensorcerers.game"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea -javaagent:build/agent/quasar-agent.jar -Xmx1024m"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea -javaagent:build/agent/quasar-agent.jar -Xmx1024m -Dco.paralleluniverse.fibers.verifyInstrumentation -Djava.io.tmpdir=build/tmp"/>
 </launchConfiguration>

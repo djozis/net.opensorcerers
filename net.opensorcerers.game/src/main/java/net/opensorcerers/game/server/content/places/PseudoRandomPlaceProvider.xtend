@@ -2,6 +2,8 @@ package net.opensorcerers.game.server.content.places
 
 import net.opensorcerers.game.server.database.entities.DBUserCharacter
 
+import static net.opensorcerers.game.server.content.places.PlaceExtensions.*
+
 class PseudoRandomPlaceProvider {
 	/**
 	 * Background: http://www.javamex.com/tutorials/random_numbers/xorshift.shtml
@@ -31,19 +33,19 @@ class PseudoRandomPlaceProvider {
 				return #[
 					new BasePlace.PlaceCommand(
 						'''North to «places.get((randomLong(x , y + 1) % places.length) as int)»''',
-						new BasePlace.MovementAction('''0:«x»:«y + 1»''')
+						[proxyFactory, character|tryToMoveTo(proxyFactory, character, '''0:«x»:«y + 1»''')]
 					),
 					new BasePlace.PlaceCommand(
 						'''South to «places.get((randomLong(x , y - 1) % places.length) as int)»''',
-						new BasePlace.MovementAction('''0:«x»:«y - 1»''')
+						[proxyFactory, character|tryToMoveTo(proxyFactory, character, '''0:«x»:«y - 1»''')]
 					),
 					new BasePlace.PlaceCommand(
 						'''East to «places.get((randomLong(x + 1, y) % places.length) as int)»''',
-						new BasePlace.MovementAction('''0:«x + 1»:«y»''')
+						[proxyFactory, character|tryToMoveTo(proxyFactory, character, '''0:«x + 1»:«y»''')]
 					),
 					new BasePlace.PlaceCommand(
 						'''West to «places.get((randomLong(x - 1, y) % places.length) as int)»''',
-						new BasePlace.MovementAction('''0:«x - 1»:«y»''')
+						[proxyFactory, character|tryToMoveTo(proxyFactory, character, '''0:«x - 1»:«y»''')]
 					)
 				]
 			}

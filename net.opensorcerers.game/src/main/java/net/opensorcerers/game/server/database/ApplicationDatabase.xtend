@@ -9,12 +9,14 @@ import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionOf
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionsInitializer
 import net.opensorcerers.mongoframework.lib.MongoBeanCodecRegistry
 import net.opensorcerers.game.server.database.entities.DBUserCharacter
+import net.opensorcerers.game.server.database.entities.DBCombatPlace
 
 class ApplicationDatabase {
 	@MongoBeanCollectionOf DBUser users
 	@MongoBeanCollectionOf DBAuthenticationIdPassword authenticationIdPassword
 	@MongoBeanCollectionOf DBUserSession userSessions
 	@MongoBeanCollectionOf DBUserCharacter userCharacters
+	@MongoBeanCollectionOf DBCombatPlace combatPlaces
 
 	@MongoBeanCollectionsInitializer def void createCollections(MongoDatabase database) {
 		// Filled in by annotation

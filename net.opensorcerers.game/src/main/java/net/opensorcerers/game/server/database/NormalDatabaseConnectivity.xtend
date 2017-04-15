@@ -3,16 +3,22 @@ package net.opensorcerers.game.server.database
 import com.mongodb.async.client.MongoClient
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoDatabase
+import de.flapdoodle.embed.mongo.Command
 import de.flapdoodle.embed.mongo.MongodExecutable
 import de.flapdoodle.embed.mongo.MongodStarter
+import de.flapdoodle.embed.mongo.config.ExtractedArtifactStoreBuilder
 import de.flapdoodle.embed.mongo.config.IMongodConfig
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder
 import de.flapdoodle.embed.mongo.config.Net
+import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder
 import de.flapdoodle.embed.mongo.config.Storage
 import de.flapdoodle.embed.mongo.distribution.Version
+import de.flapdoodle.embed.process.io.directories.PlatformTempDir
 import de.flapdoodle.embed.process.runtime.Network
 import java.io.IOException
 import org.eclipse.xtend.lib.annotations.Accessors
+import java.io.File
+import de.flapdoodle.embed.mongo.config.MongoCmdOptionsBuilder
 
 class NormalDatabaseConnectivity extends DatabaseConnectivity {
 	var MongodExecutable mongodExecutable = null
@@ -21,7 +27,17 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 
 	override open() {
 		if (mongodExecutable === null) {
-			mongodExecutable = MongodStarter.defaultInstance.prepare(getMongoConfiguration)
+			val command = Command.MongoD
+			mongodExecutable = MongodStarter.getInstance(
+				new RuntimeConfigBuilder().defaults(command).artifactStore(
+					new ExtractedArtifactStoreBuilder => [
+						defaults(command)
+						tempDir(new PlatformTempDir {
+							override File asFile() { return super.asFile.absoluteFile }
+						})
+					]
+				).build
+			).prepare(getMongoConfiguration)
 		}
 
 		try {
@@ -44,6 +60,12 @@ class NormalDatabaseConnectivity extends DatabaseConnectivity {
 		version(Version.Main.PRODUCTION)
 		net(new Net("localhost", 27017, Network.localhostIsIPv6))
 		replication(new Storage("db", null, 0))
+		cmdOptions(
+			(new MongoCmdOptionsBuilder => [
+				useSmallFiles(true)
+				useNoJournal(false)
+			]).build
+		)
 	]).build
 
 	override close() throws IOException {

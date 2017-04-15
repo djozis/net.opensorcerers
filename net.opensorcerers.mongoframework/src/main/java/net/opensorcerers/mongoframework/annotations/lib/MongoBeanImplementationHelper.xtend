@@ -183,6 +183,7 @@ class MongoBeanImplementationHelper {
 					Object.newTypeReference.newWildcardTypeReferenceWithLowerBound
 				))
 				body = '''
+					super.«simpleName»(observer);
 					«FOR field : transformingClass.declaredFields»
 						«IF !field.transient»
 							observer.apply("«field.simpleName»", this.«field.simpleName»);
