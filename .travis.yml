@@ -3,7 +3,7 @@ jdk:
   - oraclejdk8
 sudo: true # Required or unit tests seems to fail for some reason?
 before_install:
- - export GRADLE_OPTS="-Xmx128m" # Might as well not waste memory
+ - export GRADLE_OPTS="-Xmx256m" # Might as well not waste memory
  - ./.travis/debug-memory.sh &
 install:
  - ./gradlew assemble
