@@ -213,9 +213,9 @@ class MongoBeanImplementationHelper {
 				returnType = transformationContext.getFilterFieldType(field.type)
 				body = '''
 					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
-						return new «returnType.toString»("«field.simpleName»");
+						return new «returnType.type.qualifiedName»("«field.simpleName»");
 					} else {
-						return new «returnType.toString»(this.getFieldName() + ".«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getFieldName() + ".«field.simpleName»");
 					}
 				'''
 			]
@@ -257,9 +257,9 @@ class MongoBeanImplementationHelper {
 				returnType = transformationContext.getUpdateFieldType(field.type)
 				body = '''
 					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
-						return new «returnType.toString»(this.getUpdateStatementList(), "«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getUpdateStatementList(), "«field.simpleName»");
 					} else {
-						return new «returnType.toString»(this.getUpdateStatementList(), this.getFieldName() + ".«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getUpdateStatementList(), this.getFieldName() + ".«field.simpleName»");
 					}
 				'''
 			]
@@ -312,9 +312,9 @@ class MongoBeanImplementationHelper {
 				returnType = transformationContext.getProjectFieldType(field.type)
 				body = '''
 					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
-						return new «returnType.toString»(this.getProjectStatementList(), "«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getProjectStatementList(), "«field.simpleName»");
 					} else {
-						return new «returnType.toString»(this.getProjectStatementList(), this.getFieldName() + ".«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getProjectStatementList(), this.getFieldName() + ".«field.simpleName»");
 					}
 				'''
 			]
@@ -358,9 +358,9 @@ class MongoBeanImplementationHelper {
 				returnType = transformationContext.getIndexFieldType(field.type)
 				body = '''
 					if (this.getFieldName() == null || this.getFieldName().isEmpty()) {
-						return new «returnType.toString»(this.getIndexStatementList(), "«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getIndexStatementList(), "«field.simpleName»");
 					} else {
-						return new «returnType.toString»(this.getIndexStatementList(), this.getFieldName() + ".«field.simpleName»");
+						return new «returnType.type.qualifiedName»(this.getIndexStatementList(), this.getFieldName() + ".«field.simpleName»");
 					}
 				'''
 			]
@@ -397,7 +397,7 @@ class MongoBeanImplementationHelper {
 		switch (typeReference) {
 			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
 				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
-				findClass(typeReference.name.filterFieldClassName).newTypeReference
+				findTypeGlobally(typeReference.name.filterFieldClassName).newTypeReference
 			case Number.newTypeReference.isAssignableFrom(typeReference):
 				FilterNumberField.newTypeReference
 			default:
@@ -409,7 +409,7 @@ class MongoBeanImplementationHelper {
 		switch (typeReference) {
 			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
 				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
-				findClass(typeReference.name.updateFieldClassName).newTypeReference
+				typeReference.name.updateFieldClassName.findTypeGlobally.newTypeReference
 			case Number.newTypeReference.isAssignableFrom(typeReference):
 				UpdateNumberField.newTypeReference
 			default:
@@ -421,7 +421,7 @@ class MongoBeanImplementationHelper {
 		switch (typeReference) {
 			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
 				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
-				findClass(typeReference.name.projectFieldClassName).newTypeReference
+				typeReference.name.projectFieldClassName.findTypeGlobally.newTypeReference
 			default:
 				ProjectField.newTypeReference
 		}
@@ -431,7 +431,7 @@ class MongoBeanImplementationHelper {
 		switch (typeReference) {
 			case MongoBean.newTypeReference.isAssignableFrom(typeReference) ||
 				MongoBeanMixin.newTypeReference.isAssignableFrom(typeReference):
-				findClass(typeReference.name.indexFieldClassName).newTypeReference
+				typeReference.name.indexFieldClassName.findTypeGlobally.newTypeReference
 			default:
 				IndexField.newTypeReference
 		}
