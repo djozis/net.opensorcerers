@@ -32,13 +32,13 @@ class PlaceProvider {
 			}
 			case "combat": {
 				val database = ApplicationResources.instance.database
-				val dbCombatPlace = database.combatPlaces.findWhere [
+				val dbCombatPlace = database.wildEncounters.findWhere [
 					it._id == new BsonObjectId(new ObjectId(positionSplit.last))
 				].first
 				if (dbCombatPlace === null) {
 					return null
 				}
-				return new CombatPlace(dbCombatPlace)
+				return new WildEncounter(dbCombatPlace)
 			}
 			default: {
 				return null

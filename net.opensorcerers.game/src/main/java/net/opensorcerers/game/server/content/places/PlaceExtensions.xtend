@@ -6,6 +6,7 @@ import java.util.Random
 import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.server.CharacterWidgetServiceProxy
 import net.opensorcerers.game.server.ClientServiceProxyFactory
+import net.opensorcerers.game.server.content.species.SpeciesProvider
 import net.opensorcerers.game.server.database.entities.DBUserCharacter
 import org.bson.BsonObjectId
 import org.bson.types.ObjectId
@@ -48,9 +49,14 @@ class PlaceExtensions {
 		String targetPlaceId
 	) {
 		if (random.nextDouble < 0.3d) {
-			val combatPlace = ApplicationResources.instance.database.combatPlaces.insertOne [
+			val combatPlace = ApplicationResources.instance.database.wildEncounters.insertOne [
 				_id = new BsonObjectId(new ObjectId)
-				victoryPosition = character.position
+				parentPosition = character.position
+				opponent = SpeciesProvider.instance.getSpecies(0).generateWildCreature
+				status = '''
+					A «opponent.species.name» stops you in your tracks!
+					«opponent.name» has «opponent.hitpoints»/«opponent.maxHitpoints» hitpoints.
+				'''
 			]
 			moveIfUnmoved(proxyFactory, character, '''combat:«combatPlace._id.value.toHexString»''')
 		} else {

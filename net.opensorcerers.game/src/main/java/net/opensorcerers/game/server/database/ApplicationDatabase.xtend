@@ -4,19 +4,19 @@ import co.paralleluniverse.fibers.Fiber
 import com.mongodb.async.client.MongoDatabase
 import net.opensorcerers.game.server.database.entities.DBAuthenticationIdPassword
 import net.opensorcerers.game.server.database.entities.DBUser
+import net.opensorcerers.game.server.database.entities.DBUserCharacter
 import net.opensorcerers.game.server.database.entities.DBUserSession
+import net.opensorcerers.game.server.database.entities.DBWildEncounter
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionOf
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionsInitializer
 import net.opensorcerers.mongoframework.lib.MongoBeanCodecRegistry
-import net.opensorcerers.game.server.database.entities.DBUserCharacter
-import net.opensorcerers.game.server.database.entities.DBCombatPlace
 
 class ApplicationDatabase {
 	@MongoBeanCollectionOf DBUser users
 	@MongoBeanCollectionOf DBAuthenticationIdPassword authenticationIdPassword
 	@MongoBeanCollectionOf DBUserSession userSessions
 	@MongoBeanCollectionOf DBUserCharacter userCharacters
-	@MongoBeanCollectionOf DBCombatPlace combatPlaces
+	@MongoBeanCollectionOf DBWildEncounter wildEncounters
 
 	@MongoBeanCollectionsInitializer def void createCollections(MongoDatabase database) {
 		// Filled in by annotation
