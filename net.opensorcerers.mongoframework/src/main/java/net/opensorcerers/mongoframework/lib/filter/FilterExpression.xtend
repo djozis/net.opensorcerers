@@ -6,13 +6,22 @@ import org.bson.BsonDocumentWrapper
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 import static net.opensorcerers.mongoframework.lib.filter.FilterField.*
 
-@FinalFieldsConstructor @Accessors class FilterExpression implements Bson {
+@Accessors class FilterExpression implements Bson {
 	val String key
 	val Object value
+
+	new(String key, Object value) {
+		if (value instanceof FilterField) {
+			throw new IllegalArgumentException(
+				'''FilterExpression value cannot be FilterField but was FilterField for «value.fieldName»'''
+			)
+		}
+		this.key = key
+		this.value = value
+	}
 
 	def protected FilterExpression join(String key, FilterExpression other) {
 		if (this.key === key) {

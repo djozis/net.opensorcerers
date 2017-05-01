@@ -10,9 +10,12 @@ import net.opensorcerers.game.server.ApplicationResources
 import net.opensorcerers.game.server.CharacterWidgetServiceProxy
 import net.opensorcerers.game.server.ClientServiceProxyFactory
 import net.opensorcerers.game.server.content.places.PlaceProvider
+import net.opensorcerers.game.server.content.species.SpeciesProvider
 import net.opensorcerers.game.server.database.entities.DBUserSession
 import net.opensorcerers.game.shared.servicetypes.UserCharacter
 import net.opensorcerers.util.SuspendableFunction1
+import org.bson.BsonObjectId
+import org.bson.types.ObjectId
 
 import static net.opensorcerers.util.FiberBlockingAsyncCallback.*
 
@@ -43,8 +46,26 @@ import static extension net.opensorcerers.util.Extensions.*
 					'''Character name «toCreate» is in use.'''
 				)
 			}
-			database.userCharacters.insertOne(toCreate.toDbVersion => [
-				it.userId = session.userId
+			val newCreatureId = new BsonObjectId(new ObjectId)
+			val characterId = database.userCharacters.updateOneWhere(
+				[name == toCreate.name],
+				[
+					it.userId.onInsert = session.userId
+					it.name.onInsert = toCreate.name
+					it.position = PlaceProvider.INSTANCE.defaultPosition
+					it.currentCreature = newCreatureId
+				],
+				[upsert(true)]
+			).upsertedId as BsonObjectId
+			if (characterId === null) {
+				throw new IllegalArgumentException(
+					'''Character name «toCreate» is in use.'''
+				)
+			}
+			database.userCreatures.insertOne(SpeciesProvider.instance.getSpecies(0).generateWildCreature => [
+				it._id = newCreatureId
+				it.owner = characterId
+				it.name = "First Friend"
 			])
 			return toCreate
 		]
@@ -55,9 +76,10 @@ import static extension net.opensorcerers.util.Extensions.*
 			val widgetService = new CharacterWidgetServiceProxy(vertx.eventBus, session.sessionId)
 			val character = findCharacterOrError(session, characterName)
 			val place = PlaceProvider.INSTANCE.getPlace(character)
+			val availableCommands = place.getAvailableCommands(character)
 			inParallel[
 				addCall[widgetService.setCurrentOutput(place.getDescription(character), it)]
-				addCall[widgetService.setAvailablePlaceCommands(place.getAvailableCommands(character), it)]
+				addCall[widgetService.setAvailablePlaceCommands(availableCommands, it)]
 			]
 		]
 	}

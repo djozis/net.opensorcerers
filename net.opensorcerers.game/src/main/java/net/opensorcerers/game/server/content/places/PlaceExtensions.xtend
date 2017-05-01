@@ -34,8 +34,9 @@ class PlaceExtensions {
 					'''Place "«targetPlaceId»" is null from getPlace'''
 				)
 			}
+			val availableCommands = newPlace.getAvailableCommands(character)
 			fiberBlockingCall[widgetService.setCurrentOutput(newPlace.getDescription(character), it)]
-			fiberBlockingCall[widgetService.setAvailablePlaceCommands(newPlace.getAvailableCommands(character), it)]
+			fiberBlockingCall[widgetService.setAvailablePlaceCommands(availableCommands, it)]
 		} else {
 			throw new IllegalArgumentException(
 				'''Character was no longer at: «character.position»'''

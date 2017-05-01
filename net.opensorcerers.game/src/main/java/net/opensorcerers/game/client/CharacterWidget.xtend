@@ -50,7 +50,14 @@ import net.opensorcerers.game.shared.servicetypes.AvailableCommand
 		]
 	}
 
-	override void setAvailablePlaceCommands(ArrayList<AvailableCommand> availablePlaceCommands, AsyncCallback<Void> callback) {
+	override void printToOutput(String toPrint, AsyncCallback<Void> callback) {
+		callback.fulfill [
+			displayText.text = displayText + "\n" + toPrint
+		]
+	}
+
+	override void setAvailablePlaceCommands(ArrayList<AvailableCommand> availablePlaceCommands,
+		AsyncCallback<Void> callback) {
 		callback.fulfill [
 			placeBasedCommandsButtonGroup.clear
 			for (action : availablePlaceCommands) {

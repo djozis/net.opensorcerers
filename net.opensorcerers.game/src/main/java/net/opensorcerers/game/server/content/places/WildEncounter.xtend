@@ -8,12 +8,19 @@ import net.opensorcerers.game.server.ClientServiceProxyFactory
 import net.opensorcerers.game.server.database.entities.DBUserCharacter
 import net.opensorcerers.game.server.database.entities.DBWildEncounter
 import net.opensorcerers.game.shared.servicetypes.AvailableCommand
+import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.xtend.lib.annotations.FinalFieldsConstructor
 
 import static net.opensorcerers.game.server.content.places.PlaceExtensions.*
 
 @FinalFieldsConstructor class WildEncounter implements Place {
-	val DBWildEncounter dbWildEncounter
+	@Accessors val DBWildEncounter dbWildEncounter
+
+	transient BattleContext battleContextStore = null
+
+	@Suspendable def getBattleContext(DBUserCharacter playerCharacter) {
+		return battleContextStore ?: (battleContextStore = new BattleContext().init(playerCharacter, this))
+	}
 
 	@Suspendable def destroy() {
 		ApplicationResources.instance.database.wildEncounters.deleteOneWhere[it._id == this.dbWildEncounter._id]
@@ -38,11 +45,18 @@ import static net.opensorcerers.game.server.content.places.PlaceExtensions.*
 	}
 
 	@Suspendable def calculateAvailableCommands(DBUserCharacter commandsCharacter) {
-		return #[
-			new PlaceCommand("Flee") [ extension proxyFactory, character |
-				moveIfUnmoved(proxyFactory, character, dbWildEncounter.parentPosition)
-			]
-		]
+		val it = new ArrayList
+
+		add(new PlaceCommand("Flee") [ extension proxyFactory, character |
+			moveIfUnmoved(proxyFactory, character, dbWildEncounter.parentPosition)
+		])
+
+		val battleContext = commandsCharacter.battleContext
+		for (creature : battleContext.playerCreatures) {
+			creature.addBattleCommands(it, battleContext)
+		}
+
+		return it
 	}
 
 	@Suspendable override getAvailableCommands(DBUserCharacter character) {

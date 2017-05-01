@@ -10,6 +10,7 @@ import net.opensorcerers.game.server.database.entities.DBWildEncounter
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionOf
 import net.opensorcerers.mongoframework.annotations.MongoBeanCollectionsInitializer
 import net.opensorcerers.mongoframework.lib.MongoBeanCodecRegistry
+import net.opensorcerers.game.server.database.entities.DBCreature
 
 class ApplicationDatabase {
 	@MongoBeanCollectionOf DBUser users
@@ -17,6 +18,7 @@ class ApplicationDatabase {
 	@MongoBeanCollectionOf DBUserSession userSessions
 	@MongoBeanCollectionOf DBUserCharacter userCharacters
 	@MongoBeanCollectionOf DBWildEncounter wildEncounters
+	@MongoBeanCollectionOf DBCreature userCreatures
 
 	@MongoBeanCollectionsInitializer def void createCollections(MongoDatabase database) {
 		// Filled in by annotation
@@ -35,6 +37,9 @@ class ApplicationDatabase {
 			userCharacters.indexes = [
 				createIndex[userId.ascending]
 				createIndex[name.ascending].withOptions[unique(true)]
+			]
+			userCreatures.indexes = [
+				createIndex[owner.ascending]
 			]
 		].start.join
 	}
